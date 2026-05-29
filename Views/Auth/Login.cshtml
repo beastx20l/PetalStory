@@ -1,0 +1,63 @@
+﻿@model FlowerShop.Models.ViewModels.LoginViewModel
+
+<div class="container mt-5"
+     style="max-width: 500px;">
+
+    <div class="card shadow">
+
+        <div class="card-body p-4">
+
+            <h2 class="text-center mb-4">
+                Вход
+            </h2>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger">
+                    @ViewBag.Error
+                </div>
+            }
+
+            <form method="post">
+
+                <div class="mb-3">
+
+                    <label>Email</label>
+
+                    <input asp-for="Email"
+                           class="form-control" />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label>Пароль</label>
+
+                    <input asp-for="Password"
+                           type="password"
+                           class="form-control" />
+
+                </div>
+
+                <button type="submit"
+                        class="btn btn-success w-100">
+
+                    Войти
+
+                </button>
+
+            </form>
+
+            <div class="text-center mt-3">
+
+                <a href="/Auth/Register">
+                    Зарегистрироваться
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

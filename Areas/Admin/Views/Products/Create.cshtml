@@ -1,0 +1,66 @@
+﻿@model FlowerShop.Models.Product
+
+@{
+    ViewData["Title"] = "Добавить товар";
+}
+
+<div class="container mt-4">
+
+    <h1>Добавление товара</h1>
+
+    <form asp-action="Create" method="post">
+
+        <div class="mb-3">
+            <label class="form-label">Название</label>
+
+            <input asp-for="Name" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Описание</label>
+
+            <textarea asp-for="Description"
+                      class="form-control"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Цена</label>
+
+            <input asp-for="Price"
+                   class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Количество</label>
+
+            <input asp-for="StockQuantity"
+                   class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Категория</label>
+
+            <select asp-for="CategoryId"
+                    asp-items="ViewBag.Categories"
+                    class="form-select">
+            </select>
+        </div>
+
+        <div class="form-check mb-3">
+
+            <input asp-for="IsActive" type="checkbox" class="form-check-input" />
+
+            <label class="form-check-label">
+                Активен
+            </label>
+
+        </div>
+
+        <button type="submit"
+                class="btn btn-success">
+            Сохранить
+        </button>
+
+    </form>
+
+</div>

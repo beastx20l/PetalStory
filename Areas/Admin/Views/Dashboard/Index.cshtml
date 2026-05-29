@@ -1,0 +1,34 @@
+﻿@{
+    ViewData["Title"] = "Админ-панель";
+}
+
+<div class="container mt-4">
+    <h1>Админ-панель FlowerShop</h1>
+
+    <hr />
+
+    <div class="row mt-4">
+
+        <div class="col-md-4 mb-3">
+            <a asp-area="Admin"
+               asp-controller="Products"
+               asp-action="Index"
+               class="btn btn-primary w-100 p-3">
+                Управление товарами
+            </a>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <a class="btn btn-success w-100 p-3">
+                Управление категориями
+            </a>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <a class="btn btn-warning w-100 p-3">
+                Управление заказами
+            </a>
+        </div>
+
+    </div>
+</div>

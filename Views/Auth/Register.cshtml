@@ -1,0 +1,163 @@
+﻿```cshtml
+@model FlowerShop.Models.ViewModels.RegisterViewModel
+
+<div class="container mt-5"
+     style="max-width: 500px;">
+
+    <div class="card shadow">
+
+        <div class="card-body p-4">
+
+            <h2 class="text-center mb-4">
+                Регистрация
+            </h2>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger">
+                    @ViewBag.Error
+                </div>
+            }
+
+            <form method="post">
+
+                <!-- ИМЯ -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Имя
+                    </label>
+
+                    <input asp-for="FirstName"
+                           class="form-control" />
+
+                    <span asp-validation-for="FirstName"
+                          class="text-danger"></span>
+
+                </div>
+
+                <!-- ФАМИЛИЯ -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Фамилия
+                    </label>
+
+                    <input asp-for="LastName"
+                           class="form-control" />
+
+                    <span asp-validation-for="LastName"
+                          class="text-danger"></span>
+
+                </div>
+
+                <!-- ТЕЛЕФОН -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Телефон
+                    </label>
+
+                    <input asp-for="Phone"
+                           class="form-control"
+                           maxlength="12"
+                           pattern="\+7[0-9]{10}"
+                           onfocus="
+                           if(this.value === '')
+                           this.value = '+7';
+                           "
+                           oninput="
+                           this.value=this.value.replace(/[^0-9+]/g, '' );
+                           if (!this.value.startsWith('+7')) {
+                           this.value='+7' ;
+                           }
+                           if (this.value.length> 12) {
+                    this.value =
+                    this.value.slice(0, 12);
+                    }
+                    " />
+
+                    <span asp-validation-for="Phone"
+                          class="text-danger"></span>
+
+                </div>
+
+                <!-- EMAIL -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Email
+                    </label>
+
+                    <input asp-for="Email"
+                           class="form-control" />
+
+                    <span asp-validation-for="Email"
+                          class="text-danger"></span>
+
+                </div>
+
+                <!-- PASSWORD -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Пароль
+                    </label>
+
+                    <input asp-for="Password"
+                           type="password"
+                           class="form-control" />
+
+                    <span asp-validation-for="Password"
+                          class="text-danger"></span>
+
+                </div>
+
+                <!-- CONFIRM PASSWORD -->
+                <div class="mb-4">
+
+                    <label class="form-label">
+                        Повторите пароль
+                    </label>
+
+                    <input asp-for="ConfirmPassword"
+                           type="password"
+                           class="form-control" />
+
+                    <span asp-validation-for="ConfirmPassword"
+                          class="text-danger"></span>
+
+                </div>
+
+                <button type="submit"
+                        class="btn btn-success w-100">
+
+                    Зарегистрироваться
+
+                </button>
+
+            </form>
+
+            <div class="text-center mt-3">
+
+                <a href="/Auth/Login">
+                    Уже есть аккаунт?
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    @{
+        await Html.RenderPartialAsync(
+            "_ValidationScriptsPartial");
+    }
+
+}
+```
