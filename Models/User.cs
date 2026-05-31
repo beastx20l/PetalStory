@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using PetalStory.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
 
 namespace FlowerShop.Models
@@ -31,5 +32,6 @@ namespace FlowerShop.Models
 
         public ICollection<CartItem> CartItems { get; set; }
             = new List<CartItem>();
+        public ICollection<UserAddress> Addresses { get; set; } = new List<UserAddress>();
     }
 }

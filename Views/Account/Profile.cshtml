@@ -1,5 +1,4 @@
-﻿@model FlowerShop.Models.User
-
+﻿@model FlowerShop.Models.ViewModels.ProfileViewModel
 @{
     ViewData["Title"] = "Личный кабинет";
 }
@@ -12,7 +11,7 @@
     </div>
 
     <div class="row">
-        <!-- Левая колонка -->
+        <!-- Левая колонка - Мои данные -->
         <div class="col-md-4">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
@@ -35,11 +34,14 @@
                         <strong>Телефон:</strong><br>
                         <span>@(Model.Phone ?? "Не указан")</span>
                     </div>
+                    <div class="mb-3">
+                        <strong>Дата регистрации:</strong><br>
+                        <span>@Model.CreatedAt.ToString("dd MMMM yyyy")</span>
+                    </div>
 
                     <button type="button" class="btn btn-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                         <i class="fa fa-edit"></i> Редактировать профиль
                     </button>
-
                     <button type="button" class="btn btn-outline-primary w-100 mt-2" onclick="alert('Функция изменения пароля в разработке')">
                         <i class="fa fa-key"></i> Изменить пароль
                     </button>
@@ -47,10 +49,55 @@
             </div>
         </div>
 
-        <!-- Правая колонка - История заказов -->
+        <!-- Правая колонка -->
         <div class="col-md-8">
-            <h4 class="mb-3">История заказов</h4>
-            @if (Model.Orders != null && Model.Orders.Any())
+
+            <!-- Сохранённые адреса -->
+            <h4 class="mb-3">Сохранённые адреса доставки</h4>
+
+            @if (Model.Addresses != null && Model.Addresses.Any())
+            {
+                <div class="row">
+                    @foreach (var address in Model.Addresses)
+                    {
+                        <div class="col-md-12 mb-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <p class="mb-1"><strong>Адрес:</strong> @address.Address</p>
+
+                                            @if (!string.IsNullOrEmpty(address.RecipientName))
+                                            {
+                                                <p class="mb-1"><strong>Получатель:</strong> @address.RecipientName</p>
+                                            }
+
+                                            @if (!string.IsNullOrEmpty(address.Phone))
+                                            {
+                                                <p class="mb-1"><strong>Телефон:</strong> @address.Phone</p>
+                                            }
+                                        </div>
+                                        @if (address.IsDefault)
+                                        {
+                                            <span class="badge bg-success">Основной</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    У вас пока нет сохранённых адресов доставки.
+                </div>
+            }
+
+            <!-- История заказов -->
+            <h4 class="mb-3 mt-5">История заказов</h4>
+            @if (Model.Orders != null && Model.Orders.Any())  // Обратите внимание: Orders пока нет в ViewModel!
             {
                 <div class="table-responsive">
                     <table class="table table-striped">
@@ -86,11 +133,11 @@
     </div>
 </div>
 
-<!-- Стало - Tag Helper (рекомендуется) -->
-<partial name="_EditProfileModal" model="@new FlowerShop.Models.ViewModels.EditProfileViewModel 
-{
-    FirstName = Model.FirstName,
-    LastName = Model.LastName,
-    Phone = Model.Phone,
-    Email = Model.Email
- }" />
+<!-- Модальное окно редактирования профиля -->
+<partial name="_EditProfileModal" model="@new FlowerShop.Models.ViewModels.EditProfileViewModel
+                                  {
+                                      FirstName = Model.FirstName,
+                                      LastName = Model.LastName,
+                                      Phone = Model.Phone,
+                                      Email = Model.Email
+                                  }" />

@@ -3,6 +3,7 @@ using FlowerShop.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PetalStory.Models.ViewModels;
 
 namespace FlowerShop.Controllers
 {
@@ -27,12 +28,24 @@ namespace FlowerShop.Controllers
 
             var user = _context.Users
                 .Include(u => u.Orders)
+                .Include(u => u.Addresses)        // ← Добавили подгрузку адресов
                 .FirstOrDefault(u => u.Id == userId);
 
             if (user == null)
                 return RedirectToAction("Login", "Auth");
 
-            return View(user);
+            // Маппим в ViewModel
+            var model = new ProfileViewModel
+            {
+                FirstName = user.FirstName ?? "",
+                LastName = user.LastName ?? "",
+                Email = user.Email,
+                Phone = user.Phone ?? "",
+                CreatedAt = user.CreatedAt,
+                Addresses = user.Addresses.ToList()
+            };
+
+            return View(model);
         }
 
         // GET: Редактирование профиля (для модального окна)
