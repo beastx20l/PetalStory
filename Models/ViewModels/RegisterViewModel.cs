@@ -11,7 +11,7 @@ namespace FlowerShop.Models.ViewModels
         [Required(ErrorMessage = "Введите имя")]
 
         [MinLength(2,
-            ErrorMessage = "Минимум 2 символа")]
+            ErrorMessage = "Введите корректное имя")]
 
         [RegularExpression(
             @"^[А-Яа-яA-Za-z]+$",
@@ -28,7 +28,7 @@ namespace FlowerShop.Models.ViewModels
         [Required(ErrorMessage = "Введите фамилию")]
 
         [MinLength(2,
-            ErrorMessage = "Минимум 2 символа")]
+            ErrorMessage = "Введите корректную фамилию")]
 
         [RegularExpression(
             @"^[А-Яа-яA-Za-z]+$",
@@ -47,7 +47,7 @@ namespace FlowerShop.Models.ViewModels
         [RegularExpression(
             @"^\+7\d{10}$",
             ErrorMessage =
-            "Введите номер полностью")]
+            "Указан неверный номер")]
 
         public string Phone { get; set; }
             = "+7";
@@ -62,7 +62,7 @@ namespace FlowerShop.Models.ViewModels
             @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
 
             ErrorMessage =
-            "Email должен содержать только английские символы")]
+            "Введен неверный формат")]
 
         public string Email { get; set; }
             = string.Empty;
@@ -77,11 +77,8 @@ namespace FlowerShop.Models.ViewModels
             ErrorMessage =
             "Пароль должен содержать минимум 6 символов")]
 
-        [RegularExpression(
-            @"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&_\-])[A-Za-z\d@$!%*#?&_\-]+$",
-
-            ErrorMessage =
-            "Пароль должен содержать английские буквы, цифры и символы")]
+        [RegularExpression(@"^[A-Za-z0-9]{6,}$",
+        ErrorMessage = "Пароль может содержать только латинские буквы и цифры (минимум 6 символов)")]
 
         public string Password { get; set; }
             = string.Empty;

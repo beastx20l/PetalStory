@@ -1,0 +1,63 @@
+﻿@model FlowerShop.Models.User
+
+@{
+    ViewData["Title"] = "Личный кабинет";
+}
+<div class="container mt-4">
+    <h2>Личный кабинет</h2>
+    <hr />
+
+    <div class="row">
+        <!-- Информация о пользователе -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Мои данные</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Имя:</strong> @Model.FirstName @Model.LastName</p>
+                    <p><strong>Email:</strong> @Model.Email</p>
+                    <p><strong>Телефон:</strong> @Model.Phone</p>
+                    <p><strong>Роль:</strong> @Model.Role?.Name</p>
+
+                    <a asp-action="Edit" class="btn btn-primary mt-3">Редактировать профиль</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- История заказов -->
+        <div class="col-md-8">
+            <h4>История заказов</h4>
+            @if (Model.Orders != null && Model.Orders.Any())
+            {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>№ Заказа</th>
+                            <th>Дата</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model.Orders.OrderByDescending(o => o.CreatedAt))
+                        {
+                            <tr>
+                                <td>#@order.Id</td>
+                                <td>@order.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@order.TotalAmount.ToString("C0")</td>
+                                <td><span class="badge bg-info">@order.Status</span></td>
+                                <td><a asp-action="Details" asp-controller="Orders" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">Подробнее</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-muted">У вас пока нет заказов.</p>
+            }
+        </div>
+    </div>
+</div>

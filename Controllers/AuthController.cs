@@ -1,10 +1,8 @@
 ﻿using FlowerShop.Models;
 using FlowerShop.Models.ViewModels;
-
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
-
 using System.Security.Claims;
 
 namespace FlowerShop.Controllers
@@ -21,75 +19,54 @@ namespace FlowerShop.Controllers
         // =========================
         // LOGIN
         // =========================
-
         // GET
         public IActionResult Login()
         {
             return View();
         }
 
-        // POST
+        // POST Login
         [HttpPost]
-        public async Task<IActionResult> Login(
-            LoginViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
             var user = _context.Users.FirstOrDefault(u =>
-                u.Email == model.Email &&
-                u.Password == model.Password);
+                u.Email == model.Email && u.Password == model.Password);
 
             if (user == null)
             {
-                ViewBag.Error =
-                    "Неверный email или пароль";
-
+                ViewBag.Error = "Неверный email или пароль";
                 return View(model);
             }
 
-            var claims =
-                new List<System.Security.Claims.Claim>
-            {
-                new System.Security.Claims.Claim(
-                    ClaimTypes.Name,
-                    user.Email),
+            // ==================== ИСПРАВЛЕННЫЙ БЛОК ====================
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, user.Email),
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),  // ← Важно!
+        new Claim("UserId", user.Id.ToString()),                   // ← Оставляем для совместимости
+        new Claim(ClaimTypes.Role, user.RoleId switch
+        {
+            3 => "Admin",
+            2 => "Manager",
+            _ => "Customer"
+        })
+    };
 
-                new System.Security.Claims.Claim(
-                    "UserId",
-                    user.Id.ToString()),
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
 
-                new System.Security.Claims.Claim(
-                    ClaimTypes.Role,
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-                    user.RoleId switch
-                    {
-                        3 => "Admin",
-                        2 => "Manager",
-                        _ => "Customer"
-                    })
-            };
-
-            var identity = new ClaimsIdentity(
-                claims,
-                CookieAuthenticationDefaults.AuthenticationScheme);
-
-            var principal =
-                new ClaimsPrincipal(identity);
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                principal);
-
-            return RedirectToAction(
-                "Index",
-                "Home");
+            TempData["SuccessMessage"] = "Вы успешно вошли в аккаунт! Добро пожаловать!";
+            return RedirectToAction("Index", "Home");
         }
 
         // =========================
         // REGISTER
         // =========================
-
         // GET
         public IActionResult Register()
         {
@@ -98,22 +75,16 @@ namespace FlowerShop.Controllers
 
         // POST
         [HttpPost]
-        public async Task<IActionResult> Register(
-            RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
             // Проверка email
-            var existingUser =
-                _context.Users.FirstOrDefault(u =>
-                    u.Email == model.Email);
-
+            var existingUser = _context.Users.FirstOrDefault(u => u.Email == model.Email);
             if (existingUser != null)
             {
-                ViewBag.Error =
-                    "Пользователь с таким email уже существует";
-
+                ViewBag.Error = "Пользователь с таким email уже существует";
                 return View(model);
             }
 
@@ -122,34 +93,50 @@ namespace FlowerShop.Controllers
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Phone = model.Phone,
-
                 Email = model.Email,
                 Password = model.Password,
-
                 RoleId = 1,
-
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.Users.Add(user);
-
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("Login");
+            // ==================== АВТОРИЗАЦИЯ ПОСЛЕ РЕГИСТРАЦИИ ====================
+            // Создаём claims (точно так же, как в Login)
+            var claims = new List<Claim>
+             {
+            new Claim(ClaimTypes.Name, user.Email),
+            new Claim("UserId", user.Id.ToString()),
+            new Claim(ClaimTypes.Role, user.RoleId switch
+            {
+            3 => "Admin",
+            2 => "Manager",
+            _ => "Customer"
+            })
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            // Выполняем вход
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            // Уведомление об успехе
+            TempData["SuccessMessage"] = "Регистрация и вход выполнены успешно!";
+
+            // Перенаправляем на главную страницу
+            return RedirectToAction("Index", "Home");
+            // =====================================================================
         }
 
         // =========================
         // LOGOUT
         // =========================
-
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme);
-
-            return RedirectToAction(
-                "Index",
-                "Home");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index", "Home");
         }
     }
 }

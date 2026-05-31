@@ -4,26 +4,34 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB CONTEXT
+// ====================== DB CONTEXT ======================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// MVC
+// ====================== MVC ======================
 builder.Services.AddControllersWithViews();
 
-// COOKIE AUTH
-builder.Services.AddAuthentication(
-    CookieAuthenticationDefaults.AuthenticationScheme)
+// ====================== COOKIE AUTH ======================
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Auth/Login";
         options.AccessDeniedPath = "/Auth/Login";
+
+        options.Cookie.Name = "PetalStoryAuth";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);   // увеличил время
+        options.SlidingExpiration = true;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+        options.Cookie.SameSite = SameSiteMode.Lax;
     });
+
+// =========================================================
 
 var app = builder.Build();
 
-// ERROR HANDLING
+// ====================== MIDDLEWARE ======================
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -31,16 +39,14 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
-
 app.UseRouting();
 
-// AUTH
+// AUTH - важно, чтобы было в правильном порядке
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ROUTES
+// ====================== ROUTES ======================
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
