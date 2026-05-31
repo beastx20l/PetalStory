@@ -3,7 +3,6 @@ using FlowerShop.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace FlowerShop.Controllers
 {
@@ -17,14 +16,12 @@ namespace FlowerShop.Controllers
             _context = context;
         }
 
-        // GET: /Account/Profile
+        // GET: Личный кабинет
         public IActionResult Profile()
         {
-            var userIdClaim = User.FindFirstValue("UserId") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-
+            var userIdClaim = User.FindFirst("UserId")?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
             {
-                TempData["ErrorMessage"] = "Сессия устарела. Войдите заново.";
                 return RedirectToAction("Login", "Auth");
             }
 
@@ -33,24 +30,20 @@ namespace FlowerShop.Controllers
                 .FirstOrDefault(u => u.Id == userId);
 
             if (user == null)
-            {
-                TempData["ErrorMessage"] = "Пользователь не найден.";
                 return RedirectToAction("Login", "Auth");
-            }
 
             return View(user);
         }
 
-        // GET: /Account/Edit
-        public IActionResult Edit()
+        // GET: Редактирование профиля (для модального окна)
+        public IActionResult EditProfile()
         {
             var userIdClaim = User.FindFirst("UserId")?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-                return RedirectToAction("Login", "Auth");
+                return BadRequest();
 
             var user = _context.Users.Find(userId);
-            if (user == null)
-                return RedirectToAction("Login", "Auth");
+            if (user == null) return BadRequest();
 
             var model = new EditProfileViewModel
             {
@@ -60,24 +53,23 @@ namespace FlowerShop.Controllers
                 Email = user.Email
             };
 
-            return View(model);
+            return PartialView("_EditProfileModal", model);
         }
 
-        // POST: /Account/Edit
+        // POST: Сохранение профиля
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(EditProfileViewModel model)
+        public async Task<IActionResult> EditProfile(EditProfileViewModel model)
         {
             if (!ModelState.IsValid)
-                return View(model);
+                return PartialView("_EditProfileModal", model);
 
             var userIdClaim = User.FindFirst("UserId")?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-                return RedirectToAction("Login", "Auth");
+                return BadRequest();
 
             var user = _context.Users.Find(userId);
-            if (user == null)
-                return RedirectToAction("Login", "Auth");
+            if (user == null) return BadRequest();
 
             user.FirstName = model.FirstName;
             user.LastName = model.LastName;
@@ -85,8 +77,7 @@ namespace FlowerShop.Controllers
 
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Профиль успешно обновлён!";
-            return RedirectToAction("Profile");
+            return Json(new { success = true, message = "Профиль успешно обновлён!" });
         }
     }
 }

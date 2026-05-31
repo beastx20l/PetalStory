@@ -16,7 +16,7 @@ namespace FlowerShop.Models.ViewModels
         [Display(Name = "Телефон")]
         public string? Phone { get; set; }
 
-        [EmailAddress(ErrorMessage = "Некорректный email")]
+        // Email только для отображения, редактировать нельзя
         [Display(Name = "Email")]
         public string Email { get; set; } = string.Empty;
     }
