@@ -55,16 +55,19 @@ namespace FlowerShop.Controllers
         {
             var userIdClaim = User.FindFirst("UserId")?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-                return BadRequest();
+                return BadRequest("Ошибка авторизации");
 
             if (string.IsNullOrWhiteSpace(model.Address))
                 return BadRequest("Адрес обязателен");
 
-            // Если новый адрес делается основным — снимаем галочку с остальных
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return BadRequest("Пользователь не найден");
+
             if (model.IsDefault)
             {
-                var oldDefault = _context.UserAddresses.Where(a => a.UserId == userId && a.IsDefault);
-                foreach (var addr in oldDefault)
+                var oldDefaults = _context.UserAddresses.Where(a => a.UserId == userId && a.IsDefault);
+                foreach (var addr in oldDefaults)
                 {
                     addr.IsDefault = false;
                 }
@@ -74,15 +77,24 @@ namespace FlowerShop.Controllers
             {
                 UserId = userId,
                 Address = model.Address.Trim(),
-                RecipientName = model.RecipientName?.Trim(),
-                Phone = model.Phone?.Trim(),
                 IsDefault = model.IsDefault
             };
+
+            if (model.IsForAnotherPerson)
+            {
+                address.RecipientName = model.RecipientName?.Trim();
+                address.Phone = model.Phone?.Trim();
+            }
+            else
+            {
+                address.RecipientName = $"{user.FirstName} {user.LastName}".Trim();
+                address.Phone = user.Phone;
+            }
 
             _context.UserAddresses.Add(address);
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new { success = true });
         }
 
         // ==================== Удаление адреса ====================

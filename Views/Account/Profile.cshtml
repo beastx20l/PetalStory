@@ -147,51 +147,59 @@
 </div>
 
 <!-- ==================== Модальное окно добавления адреса ==================== -->
-<div class="modal fade" id="addAddressModal" tabindex="-1">
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Добавить новый адрес</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="addAddressForm">
                     <div class="mb-3">
                         <label class="form-label">Адрес <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="address" rows="2" style="resize: none;" required></textarea>
+                        <input type="text" id="Address" class="form-control" required>
                     </div>
 
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="forAnotherPerson">
-                        <label class="form-check-label">Заказ другому человеку</label>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="IsForAnotherPerson">
+                        <label class="form-check-label" for="IsForAnotherPerson">
+                            Заказ другому человеку
+                        </label>
                     </div>
 
-                    <div id="anotherPersonFields" style="display: none;">
+                    <!-- Поля для другого человека -->
+                    <div id="AnotherPersonFields" style="display: none;">
                         <div class="mb-3">
-                            <label class="form-label">Получатель</label>
-                            <input type="text" class="form-control" id="recipientName">
+                            <label class="form-label">Имя получателя <span class="text-danger">*</span></label>
+                            <input type="text" id="RecipientName" class="form-control">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Телефон получателя</label>
-                            <input type="tel" class="form-control" id="phone">
+                            <label class="form-label">Телефон получателя <span class="text-danger">*</span></label>
+                            <input type="tel" id="RecipientPhone" class="form-control">
                         </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="IsDefault" checked>
+                        <label class="form-check-label" for="IsDefault">Сделать адресом по умолчанию</label>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-success" onclick="saveAddress()">Добавить</button>
+                <button type="button" class="btn btn-success" id="btnSaveAddress">Добавить адрес</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ==================== Модальное подтверждение удаления ==================== -->
+<!-- Модальное подтверждение удаления -->
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Подтверждение</h5>
+                <h5 class="modal-title">Подтверждение удаления</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center">
@@ -207,109 +215,98 @@
 
 @section Scripts {
     <script>
-        let addressToDelete = null;
-
         document.addEventListener('DOMContentLoaded', function () {
-            const checkbox = document.getElementById('forAnotherPerson');
-            if (checkbox) {
-                checkbox.addEventListener('change', function () {
-                    document.getElementById('anotherPersonFields').style.display = this.checked ? 'block' : 'none';
+
+            // === Переключение полей "Заказ другому человеку" ===
+            const isForAnotherCheckbox = document.getElementById('IsForAnotherPerson');
+            const anotherPersonFields = document.getElementById('AnotherPersonFields');
+
+            if (isForAnotherCheckbox && anotherPersonFields) {
+                isForAnotherCheckbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        anotherPersonFields.style.display = 'block';
+                        document.getElementById('RecipientName').required = true;
+                        document.getElementById('RecipientPhone').required = true;
+                    } else {
+                        anotherPersonFields.style.display = 'none';
+                        document.getElementById('RecipientName').required = false;
+                        document.getElementById('RecipientPhone').required = false;
+                        document.getElementById('RecipientName').value = '';
+                        document.getElementById('RecipientPhone').value = '';
+                    }
                 });
             }
-        });
 
-        function showDeleteConfirm(id) {
-            addressToDelete = id;
-            new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-        }
+            // === Сохранение адреса ===
+            const saveButton = document.getElementById('btnSaveAddress');
+            if (saveButton) {
+                saveButton.addEventListener('click', function () {
+                    const isForAnother = isForAnotherCheckbox ? isForAnotherCheckbox.checked : false;
 
-        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
-            if (addressToDelete) {
-                fetch(`/Account/DeleteAddress/${addressToDelete}`, {
-                    method: 'POST',
-                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
-                }).then(() => location.reload());
+                    const data = {
+                        address: document.getElementById('Address').value.trim(),
+                        recipientName: isForAnother ? document.getElementById('RecipientName').value.trim() : null,
+                        phone: isForAnother ? document.getElementById('RecipientPhone').value.trim() : null,
+                        isDefault: document.getElementById('IsDefault').checked,
+                        isForAnotherPerson: isForAnother
+                    };
+
+                    if (!data.address) {
+                        toastr.error("Пожалуйста, заполните поле 'Адрес'");
+                        return;
+                    }
+
+                    if (isForAnother && (!data.recipientName || !data.phone)) {
+                        toastr.error("При заказе другому человеку нужно заполнить имя и телефон получателя");
+                        return;
+                    }
+
+                    fetch('/Account/AddAddress', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            toastr.success('Адрес успешно добавлен!');
+                            $('#addAddressModal').modal('hide');
+                            setTimeout(() => location.reload(), 800);
+                        } else {
+                            return response.text().then(text => {
+                                toastr.error(text || 'Не удалось добавить адрес');
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        toastr.error('Ошибка соединения с сервером');
+                    });
+                });
+            } else {
+                console.warn("Кнопка #btnSaveAddress не найдена!");
             }
-        });
 
-        function setDefaultAddress(id) {
-            if (confirm("Сделать этот адрес основным?")) {
-                fetch(`/Account/SetDefaultAddress/${id}`, {
-                    method: 'POST',
-                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
-                }).then(() => location.reload());
-            }
-        }
-
-        function saveAddress() {
-            const data = {
-                address: document.getElementById('address').value.trim(),
-                recipientName: document.getElementById('forAnotherPerson').checked ?
-                               document.getElementById('recipientName').value.trim() : null,
-                phone: document.getElementById('forAnotherPerson').checked ?
-                       document.getElementById('phone').value.trim() : null,
-                isDefault: false
-            };
-
-            fetch('/Account/AddAddress', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify(data)
-            }).then(response => {
-                if (response.ok) location.reload();
-                else alert("Ошибка при добавлении адреса");
-            });
-        }
-    </script>
-}
-
-<!-- Модальное окно редактирования профиля -->
-<partial name="_EditProfileModal" model="@new FlowerShop.Models.ViewModels.EditProfileViewModel
-                                  {
-                                      FirstName = Model.FirstName,
-                                      LastName = Model.LastName,
-                                      Phone = Model.Phone,
-                                      Email = Model.Email
-                                  }" />
-
-@section Scripts {
-    <script>
-        function deleteAddress(addressId) {
-            if (confirm("Удалить этот адрес?")) {
-                fetch(`/Account/DeleteAddress/${addressId}`, {
-                    method: 'POST',
-                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
-                })
-                .then(() => location.reload());
-            }
-        }
-
-        function saveAddress() {
-            const data = {
-                address: document.getElementById('address').value,
-                recipientName: document.getElementById('recipientName').value,
-                phone: document.getElementById('phone').value,
-                isDefault: document.getElementById('isDefault').checked
-            };
-
-            fetch('/Account/AddAddress', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert("Ошибка при добавлении адреса");
+            // === Удаление и установка основным (оставляем как было) ===
+            window.deleteAddress = function (id) {
+                if (confirm("Удалить этот адрес?")) {
+                    fetch(`/Account/DeleteAddress/${id}`, {
+                        method: 'POST',
+                        headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value }
+                    }).then(() => location.reload());
                 }
-            });
-        }
+            };
+
+            window.setDefaultAddress = function (id) {
+                if (confirm("Сделать этот адрес основным?")) {
+                    fetch(`/Account/SetDefaultAddress/${id}`, {
+                        method: 'POST',
+                        headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value }
+                    }).then(() => location.reload());
+                }
+            };
+        });
     </script>
 }
