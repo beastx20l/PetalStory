@@ -51,36 +51,51 @@
 
         <!-- Правая колонка -->
         <div class="col-md-8">
-
-            <!-- Сохранённые адреса -->
-            <h4 class="mb-3">Сохранённые адреса доставки</h4>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Сохранённые адреса доставки</h4>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                    <i class="fa fa-plus"></i> Добавить адрес
+                </button>
+            </div>
 
             @if (Model.Addresses != null && Model.Addresses.Any())
             {
                 <div class="row">
-                    @foreach (var address in Model.Addresses)
+                    @foreach (var address in Model.Addresses.OrderByDescending(a => a.IsDefault))
                     {
-                        <div class="col-md-12 mb-3">
+                        <div class="col-12 mb-3">
                             <div class="card shadow-sm">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <p class="mb-1"><strong>Адрес:</strong> @address.Address</p>
-
+                                        <div class="flex-grow-1">
+                                            <p class="mb-2"><strong>📍 Адрес:</strong> @address.Address</p>
                                             @if (!string.IsNullOrEmpty(address.RecipientName))
                                             {
                                                 <p class="mb-1"><strong>Получатель:</strong> @address.RecipientName</p>
                                             }
-
                                             @if (!string.IsNullOrEmpty(address.Phone))
                                             {
                                                 <p class="mb-1"><strong>Телефон:</strong> @address.Phone</p>
                                             }
                                         </div>
-                                        @if (address.IsDefault)
-                                        {
-                                            <span class="badge bg-success">Основной</span>
-                                        }
+
+                                        <div class="text-end">
+                                            @if (address.IsDefault)
+                                            {
+                                                <span class="badge bg-success mb-2">Основной адрес</span>
+                                            }
+                                            else
+                                            {
+                                                <button onclick="setDefaultAddress(@address.Id)"
+                                                        class="btn btn-outline-primary btn-sm mb-2">
+                                                    Сделать основным
+                                                </button>
+                                            }
+                                            <button onclick="showDeleteConfirm(@address.Id)"
+                                                    class="btn btn-outline-danger btn-sm">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -90,18 +105,16 @@
             }
             else
             {
-                <div class="alert alert-info">
-                    У вас пока нет сохранённых адресов доставки.
-                </div>
+                <div class="alert alert-info">У вас пока нет сохранённых адресов доставки.</div>
             }
 
             <!-- История заказов -->
             <h4 class="mb-3 mt-5">История заказов</h4>
-            @if (Model.Orders != null && Model.Orders.Any())  // Обратите внимание: Orders пока нет в ViewModel!
+            @if (Model.Orders != null && Model.Orders.Any())
             {
                 <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
+                    <table class="table table-striped table-hover">
+                        <thead class="table-light">
                             <tr>
                                 <th>№ Заказа</th>
                                 <th>Дата</th>
@@ -113,9 +126,9 @@
                             @foreach (var order in Model.Orders.OrderByDescending(o => o.CreatedAt))
                             {
                                 <tr>
-                                    <td>#@order.Id</td>
-                                    <td>@order.CreatedAt.ToString("dd.MM.yyyy")</td>
-                                    <td><strong>@order.TotalAmount.ToString("0") ₽</strong></td>
+                                    <td><strong>#@order.Id</strong></td>
+                                    <td>@order.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td><strong>@order.TotalAmount.ToString("N0") ₽</strong></td>
                                     <td><span class="badge bg-primary">@order.Status</span></td>
                                 </tr>
                             }
@@ -133,6 +146,126 @@
     </div>
 </div>
 
+<!-- ==================== Модальное окно добавления адреса ==================== -->
+<div class="modal fade" id="addAddressModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить новый адрес</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAddressForm">
+                    <div class="mb-3">
+                        <label class="form-label">Адрес <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="address" rows="2" style="resize: none;" required></textarea>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="forAnotherPerson">
+                        <label class="form-check-label">Заказ другому человеку</label>
+                    </div>
+
+                    <div id="anotherPersonFields" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Получатель</label>
+                            <input type="text" class="form-control" id="recipientName">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Телефон получателя</label>
+                            <input type="tel" class="form-control" id="phone">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-success" onclick="saveAddress()">Добавить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== Модальное подтверждение удаления ==================== -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Вы действительно хотите удалить этот адрес?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let addressToDelete = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const checkbox = document.getElementById('forAnotherPerson');
+            if (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    document.getElementById('anotherPersonFields').style.display = this.checked ? 'block' : 'none';
+                });
+            }
+        });
+
+        function showDeleteConfirm(id) {
+            addressToDelete = id;
+            new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            if (addressToDelete) {
+                fetch(`/Account/DeleteAddress/${addressToDelete}`, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
+                }).then(() => location.reload());
+            }
+        });
+
+        function setDefaultAddress(id) {
+            if (confirm("Сделать этот адрес основным?")) {
+                fetch(`/Account/SetDefaultAddress/${id}`, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
+                }).then(() => location.reload());
+            }
+        }
+
+        function saveAddress() {
+            const data = {
+                address: document.getElementById('address').value.trim(),
+                recipientName: document.getElementById('forAnotherPerson').checked ?
+                               document.getElementById('recipientName').value.trim() : null,
+                phone: document.getElementById('forAnotherPerson').checked ?
+                       document.getElementById('phone').value.trim() : null,
+                isDefault: false
+            };
+
+            fetch('/Account/AddAddress', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (response.ok) location.reload();
+                else alert("Ошибка при добавлении адреса");
+            });
+        }
+    </script>
+}
+
 <!-- Модальное окно редактирования профиля -->
 <partial name="_EditProfileModal" model="@new FlowerShop.Models.ViewModels.EditProfileViewModel
                                   {
@@ -141,3 +274,42 @@
                                       Phone = Model.Phone,
                                       Email = Model.Email
                                   }" />
+
+@section Scripts {
+    <script>
+        function deleteAddress(addressId) {
+            if (confirm("Удалить этот адрес?")) {
+                fetch(`/Account/DeleteAddress/${addressId}`, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
+                })
+                .then(() => location.reload());
+            }
+        }
+
+        function saveAddress() {
+            const data = {
+                address: document.getElementById('address').value,
+                recipientName: document.getElementById('recipientName').value,
+                phone: document.getElementById('phone').value,
+                isDefault: document.getElementById('isDefault').checked
+            };
+
+            fetch('/Account/AddAddress', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert("Ошибка при добавлении адреса");
+                }
+            });
+        }
+    </script>
+}

@@ -3,7 +3,7 @@ using FlowerShop.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PetalStory.Models.ViewModels;
+using PetalStory.Models;
 
 namespace FlowerShop.Controllers
 {
@@ -28,13 +28,12 @@ namespace FlowerShop.Controllers
 
             var user = _context.Users
                 .Include(u => u.Orders)
-                .Include(u => u.Addresses)        // ← Добавили подгрузку адресов
+                .Include(u => u.Addresses)
                 .FirstOrDefault(u => u.Id == userId);
 
             if (user == null)
                 return RedirectToAction("Login", "Auth");
 
-            // Маппим в ViewModel
             var model = new ProfileViewModel
             {
                 FirstName = user.FirstName ?? "",
@@ -42,13 +41,98 @@ namespace FlowerShop.Controllers
                 Email = user.Email,
                 Phone = user.Phone ?? "",
                 CreatedAt = user.CreatedAt,
-                Addresses = user.Addresses.ToList()
+                Addresses = user.Addresses.ToList(),
+                Orders = user.Orders.ToList()
             };
 
             return View(model);
         }
 
-        // GET: Редактирование профиля (для модального окна)
+        // ==================== Добавление адреса ====================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddAddress([FromBody] AddAddressViewModel model)
+        {
+            var userIdClaim = User.FindFirst("UserId")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                return BadRequest();
+
+            if (string.IsNullOrWhiteSpace(model.Address))
+                return BadRequest("Адрес обязателен");
+
+            // Если новый адрес делается основным — снимаем галочку с остальных
+            if (model.IsDefault)
+            {
+                var oldDefault = _context.UserAddresses.Where(a => a.UserId == userId && a.IsDefault);
+                foreach (var addr in oldDefault)
+                {
+                    addr.IsDefault = false;
+                }
+            }
+
+            var address = new UserAddress
+            {
+                UserId = userId,
+                Address = model.Address.Trim(),
+                RecipientName = model.RecipientName?.Trim(),
+                Phone = model.Phone?.Trim(),
+                IsDefault = model.IsDefault
+            };
+
+            _context.UserAddresses.Add(address);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        // ==================== Удаление адреса ====================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAddress(int id)
+        {
+            var userIdClaim = User.FindFirst("UserId")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                return BadRequest();
+
+            var address = await _context.UserAddresses
+                .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
+
+            if (address == null)
+                return NotFound();
+
+            _context.UserAddresses.Remove(address);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetDefaultAddress(int id)
+        {
+            var userIdClaim = User.FindFirst("UserId")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                return BadRequest();
+
+            // Снимаем "основной" со всех адресов пользователя
+            var allAddresses = _context.UserAddresses.Where(a => a.UserId == userId);
+            foreach (var addr in allAddresses)
+            {
+                addr.IsDefault = false;
+            }
+
+            // Ставим основной выбранному
+            var address = await _context.UserAddresses.FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
+            if (address != null)
+            {
+                address.IsDefault = true;
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok();
+        }
+
+        // Остальные методы (EditProfile и т.д.) оставляем без изменений
         public IActionResult EditProfile()
         {
             var userIdClaim = User.FindFirst("UserId")?.Value;
@@ -69,7 +153,6 @@ namespace FlowerShop.Controllers
             return PartialView("_EditProfileModal", model);
         }
 
-        // POST: Сохранение профиля
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProfile(EditProfileViewModel model)
