@@ -50,76 +50,136 @@ namespace FlowerShop.Controllers
 
         // ==================== Добавление адреса ====================
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        // [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddAddress([FromBody] AddAddressViewModel model)
         {
-            var userIdClaim = User.FindFirst("UserId")?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-                return BadRequest("Ошибка авторизации");
-
-            if (string.IsNullOrWhiteSpace(model.Address))
-                return BadRequest("Адрес обязателен");
-
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return BadRequest("Пользователь не найден");
-
-            if (model.IsDefault)
+            try
             {
-                var oldDefaults = _context.UserAddresses.Where(a => a.UserId == userId && a.IsDefault);
-                foreach (var addr in oldDefaults)
+                if (!ModelState.IsValid)
                 {
-                    addr.IsDefault = false;
+                    var errors = ModelState.Values.SelectMany(v => v.Errors)
+                                                 .Select(e => e.ErrorMessage)
+                                                 .ToList();
+
+                    return BadRequest(new { success = false, message = "Ошибка валидации", errors });
                 }
+
+                var userIdClaim = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                    return BadRequest(new { success = false, message = "Ошибка авторизации" });
+
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                    return BadRequest(new { success = false, message = "Пользователь не найден" });
+
+                if (model.IsDefault)
+                {
+                    var oldDefaults = await _context.UserAddresses
+                        .Where(a => a.UserId == userId && a.IsDefault)
+                        .ToListAsync();
+
+                    foreach (var a in oldDefaults)
+                        a.IsDefault = false;
+                }
+
+                var hasAddresses = await _context.UserAddresses
+                    .AnyAsync(a => a.UserId == userId);
+
+                var address = new UserAddress
+                {
+                    UserId = userId,
+                    Address = model.Address.Trim(),
+
+                    // первый адрес всегда основной
+                    IsDefault = !hasAddresses || model.IsDefault
+                };
+
+                if (model.IsForAnotherPerson)
+                {
+                    address.RecipientName = model.RecipientName?.Trim();
+                    address.Phone = model.Phone?.Trim();
+                }
+                else
+                {
+                    address.RecipientName = $"{user.FirstName} {user.LastName}".Trim();
+                    address.Phone = user.Phone;
+                }
+
+                _context.UserAddresses.Add(address);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true, message = "Адрес успешно добавлен!" });
             }
-
-            var address = new UserAddress
+            catch (Exception ex)
             {
-                UserId = userId,
-                Address = model.Address.Trim(),
-                IsDefault = model.IsDefault
-            };
-
-            if (model.IsForAnotherPerson)
-            {
-                address.RecipientName = model.RecipientName?.Trim();
-                address.Phone = model.Phone?.Trim();
+                return BadRequest(new { success = false, message = ex.Message });
             }
-            else
-            {
-                address.RecipientName = $"{user.FirstName} {user.LastName}".Trim();
-                address.Phone = user.Phone;
-            }
-
-            _context.UserAddresses.Add(address);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true });
         }
 
         // ==================== Удаление адреса ====================
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAddress(int id)
         {
             var userIdClaim = User.FindFirst("UserId")?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-                return BadRequest();
+
+            if (string.IsNullOrEmpty(userIdClaim) ||
+                !int.TryParse(userIdClaim, out int userId))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Ошибка авторизации"
+                });
+            }
 
             var address = await _context.UserAddresses
                 .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
 
             if (address == null)
-                return NotFound();
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "Адрес не найден"
+                });
+            }
 
+            var addressCount = await _context.UserAddresses
+                .CountAsync(a => a.UserId == userId);
+
+            if (addressCount <= 1)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Нельзя удалить единственный сохранённый адрес"
+                });
+            }
+            if (address.IsDefault)
+            {
+                var newDefault = await _context.UserAddresses
+                    .Where(a => a.UserId == userId && a.Id != address.Id)
+                    .OrderBy(a => a.Id)
+                    .FirstOrDefaultAsync();
+
+                if (newDefault != null)
+                {
+                    newDefault.IsDefault = true;
+                }
+            }
             _context.UserAddresses.Remove(address);
+
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new
+            {
+                success = true,
+                message = "Адрес успешно удалён"
+            });
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        // [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetDefaultAddress(int id)
         {
             var userIdClaim = User.FindFirst("UserId")?.Value;
@@ -169,8 +229,6 @@ namespace FlowerShop.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProfile(EditProfileViewModel model)
         {
-            if (!ModelState.IsValid)
-                return PartialView("_EditProfileModal", model);
 
             var userIdClaim = User.FindFirst("UserId")?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
@@ -178,10 +236,115 @@ namespace FlowerShop.Controllers
 
             var user = _context.Users.Find(userId);
             if (user == null) return BadRequest();
+            // ===== Имя =====
+            if (string.IsNullOrWhiteSpace(model.FirstName))
+            {
+                ModelState.AddModelError(
+                    "FirstName",
+                    "Введите имя"
+                );
+            }
+            else
+            {
+                if (model.FirstName.Trim().Length < 2)
+                {
+                    ModelState.AddModelError(
+                        "FirstName",
+                        "Имя должно содержать минимум 2 буквы"
+                    );
+                }
 
-            user.FirstName = model.FirstName;
-            user.LastName = model.LastName;
-            user.Phone = model.Phone;
+                if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    model.FirstName,
+                    @"^[А-Яа-яЁёA-Za-z-]+$"))
+                {
+                    ModelState.AddModelError(
+                        "FirstName",
+                        "Имя может содержать только буквы"
+                    );
+                }
+            }
+
+            // ===== Фамилия =====
+            if (string.IsNullOrWhiteSpace(model.LastName))
+            {
+                ModelState.AddModelError(
+                    "LastName",
+                    "Введите фамилию"
+                );
+            }
+            else
+            {
+                if (model.LastName.Trim().Length < 2)
+                {
+                    ModelState.AddModelError(
+                        "LastName",
+                        "Фамилия должна содержать минимум 2 буквы"
+                    );
+                }
+
+                if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    model.LastName,
+                    @"^[А-Яа-яЁёA-Za-z-]+$"))
+                {
+                    ModelState.AddModelError(
+                        "LastName",
+                        "Фамилия может содержать только буквы"
+                    );
+                }
+            }
+            // Проверка формата Email
+            if (!System.Text.RegularExpressions.Regex.IsMatch(
+                model.Email ?? "",
+                @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
+            {
+                ModelState.AddModelError(
+                    "Email",
+                    "Введен неверный формат"
+                );
+            }
+
+            // Проверка Email на дубликат
+            if (_context.Users.Any(x =>
+                x.Email == model.Email &&
+                x.Id != userId))
+            {
+                ModelState.AddModelError(
+                    "Email",
+                    "Пользователь с таким Email уже существует"
+                );
+            }
+
+            // Проверка телефона
+            if (_context.Users.Any(x =>
+                x.Phone == model.Phone &&
+                x.Id != userId))
+            {
+                ModelState.AddModelError(
+                    "Phone",
+                    "Пользователь с таким номером уже существует"
+                );
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .Distinct()
+                    .ToList();
+
+                return Json(new
+                {
+                    success = false,
+                    errors = errors
+                });
+            }
+
+            user.FirstName = model.FirstName?.Trim();
+            user.LastName = model.LastName?.Trim();
+            user.Phone = model.Phone?.Trim();
+            user.Email = model.Email.Trim();
 
             await _context.SaveChangesAsync();
 

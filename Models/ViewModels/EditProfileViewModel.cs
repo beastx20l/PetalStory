@@ -5,19 +5,22 @@ namespace FlowerShop.Models.ViewModels
     public class EditProfileViewModel
     {
         [Required(ErrorMessage = "Введите имя")]
-        [Display(Name = "Имя")]
+        
         public string? FirstName { get; set; }
 
         [Required(ErrorMessage = "Введите фамилию")]
-        [Display(Name = "Фамилия")]
+        
         public string? LastName { get; set; }
 
-        [Phone(ErrorMessage = "Некорректный номер телефона")]
-        [Display(Name = "Телефон")]
+        [Required(ErrorMessage = "Введите телефон")]
+        [RegularExpression(
+            @"^\+7\d{10}$",
+            ErrorMessage = "Указан неверный формат номера"
+        )]
         public string? Phone { get; set; }
 
-        // Email только для отображения, редактировать нельзя
-        [Display(Name = "Email")]
+        [Required(ErrorMessage = "Введите Email")]
+        [EmailAddress(ErrorMessage = "Некорректный Email")]
         public string Email { get; set; } = string.Empty;
     }
 }

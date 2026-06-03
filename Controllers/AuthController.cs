@@ -80,11 +80,22 @@ namespace FlowerShop.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Проверка email
-            var existingUser = _context.Users.FirstOrDefault(u => u.Email == model.Email);
-            if (existingUser != null)
+            // Проверка Email
+            if (_context.Users.Any(u => u.Email == model.Email))
             {
-                ViewBag.Error = "Пользователь с таким email уже существует";
+                ModelState.AddModelError("Email",
+                    "Пользователь с таким email уже существует");
+            }
+
+            // Проверка телефона
+            if (_context.Users.Any(u => u.Phone == model.Phone))
+            {
+                ModelState.AddModelError("Phone",
+                    "Пользователь с таким номером телефона уже существует");
+            }
+
+            if (!ModelState.IsValid)
+            {
                 return View(model);
             }
 

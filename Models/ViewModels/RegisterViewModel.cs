@@ -47,7 +47,7 @@ namespace FlowerShop.Models.ViewModels
         [RegularExpression(
             @"^\+7\d{10}$",
             ErrorMessage =
-            "Указан неверный номер")]
+            "Указан неверный формат номера")]
 
         public string Phone { get; set; }
             = "+7";

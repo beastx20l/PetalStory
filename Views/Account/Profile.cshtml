@@ -68,7 +68,7 @@
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
-                                            <p class="mb-2"><strong>📍 Адрес:</strong> @address.Address</p>
+                                            <p class="mb-2"><strong>Адрес:</strong> @address.Address</p>
                                             @if (!string.IsNullOrEmpty(address.RecipientName))
                                             {
                                                 <p class="mb-1"><strong>Получатель:</strong> @address.RecipientName</p>
@@ -176,14 +176,28 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Телефон получателя <span class="text-danger">*</span></label>
-                            <input type="tel" id="RecipientPhone" class="form-control">
+                            <input type="tel"
+                                   id="RecipientPhone"
+                                   class="form-control"
+                                   maxlength="12">
                         </div>
                     </div>
 
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="IsDefault" checked>
-                        <label class="form-check-label" for="IsDefault">Сделать адресом по умолчанию</label>
-                    </div>
+                    @if (Model.Addresses == null || !Model.Addresses.Any())
+                    {
+                        <div class="alert alert-info mb-3">
+                            Первый адрес будет автоматически назначен основным.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="IsDefault">
+                            <label class="form-check-label" for="IsDefault">
+                                Сделать адресом по умолчанию
+                            </label>
+                        </div>
+                    }
                 </form>
             </div>
             <div class="modal-footer">
@@ -196,14 +210,20 @@
 
 <!-- Модальное подтверждение удаления -->
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Подтверждение удаления</h5>
+                <h5 class="modal-title text-nowrap">
+                    Подтверждение удаления
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center">
-                <p>Вы действительно хотите удалить этот адрес?</p>
+            <div class="modal-body text-center py-4">
+                <i class="fa fa-trash text-danger mb-3" style="font-size: 42px;"></i>
+
+                <p class="fs-5 mb-0">
+                    Вы действительно хотите удалить этот адрес?
+                </p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
@@ -212,11 +232,88 @@
         </div>
     </div>
 </div>
+@await Html.PartialAsync("_EditProfileModal",
+new FlowerShop.Models.ViewModels.EditProfileViewModel
+{
+    FirstName = Model.FirstName,
+    LastName = Model.LastName,
+    Phone = Model.Phone,
+    Email = Model.Email
+})
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        let addressIdToDelete = null;
 
+        document.addEventListener('DOMContentLoaded', function () {
+                    const phoneInput = document.getElementById('RecipientPhone');
+
+        if (phoneInput) {
+
+            phoneInput.addEventListener('focus', function () {
+
+                if (!this.value) {
+                    this.value = '+7';
+                }
+
+            });
+
+            phoneInput.addEventListener('input', function () {
+
+                let value = this.value.replace(/[^\d+]/g, '');
+
+                if (!value.startsWith('+7')) {
+                    value = '+7';
+                }
+
+                value = '+7' + value.substring(2).replace(/\D/g, '');
+
+                if (value.length > 12) {
+                    value = value.substring(0, 12);
+                }
+
+                this.value = value;
+            });
+        }
+
+             const successMessage = sessionStorage.getItem('successMessage');
+
+                     if (successMessage) 
+                     {
+
+                        toastr.success(successMessage);
+
+                        sessionStorage.removeItem('successMessage');
+                     }
+
+            // Открытие окна удаления
+            window.showDeleteConfirm = function (id) {
+
+                addressIdToDelete = id;
+
+                const modal = new bootstrap.Modal(
+                    document.getElementById('deleteConfirmModal')
+                );
+
+                modal.show();
+            };
+
+            // Сброс формы при открытии окна добавления адреса
+            const addAddressModal = document.getElementById('addAddressModal');
+
+            if (addAddressModal) {
+
+                addAddressModal.addEventListener('show.bs.modal', function () {
+
+                    document.getElementById('addAddressForm').reset();
+
+                    document.getElementById('AnotherPersonFields').style.display = 'none';
+
+                    document.getElementById('RecipientName').required = false;
+                    document.getElementById('RecipientPhone').required = false;
+                });
+
+            }
             // === Переключение полей "Заказ другому человеку" ===
             const isForAnotherCheckbox = document.getElementById('IsForAnotherPerson');
             const anotherPersonFields = document.getElementById('AnotherPersonFields');
@@ -237,76 +334,165 @@
                 });
             }
 
-            // === Сохранение адреса ===
-            const saveButton = document.getElementById('btnSaveAddress');
-            if (saveButton) {
-                saveButton.addEventListener('click', function () {
-                    const isForAnother = isForAnotherCheckbox ? isForAnotherCheckbox.checked : false;
+               // === Сохранение адреса ===
+        const saveButton = document.getElementById('btnSaveAddress');
+        if (saveButton) {
+            saveButton.addEventListener('click', function () {
+                const isForAnother = document.getElementById('IsForAnotherPerson').checked;
 
-                    const data = {
-                        address: document.getElementById('Address').value.trim(),
-                        recipientName: isForAnother ? document.getElementById('RecipientName').value.trim() : null,
-                        phone: isForAnother ? document.getElementById('RecipientPhone').value.trim() : null,
-                        isDefault: document.getElementById('IsDefault').checked,
-                        isForAnotherPerson: isForAnother
-                    };
+        const isDefaultCheckbox = document.getElementById('IsDefault');
 
-                    if (!data.address) {
-                        toastr.error("Пожалуйста, заполните поле 'Адрес'");
-                        return;
-                    }
+        const data = {
+            address: document.getElementById('Address').value.trim(),
+            recipientName: isForAnother ? document.getElementById('RecipientName').value.trim() : null,
+            phone: isForAnother ? document.getElementById('RecipientPhone').value.trim() : null,
+            isDefault: isDefaultCheckbox ? isDefaultCheckbox.checked : false,
+            isForAnotherPerson: isForAnother
+        };
 
-                    if (isForAnother && (!data.recipientName || !data.phone)) {
-                        toastr.error("При заказе другому человеку нужно заполнить имя и телефон получателя");
-                        return;
-                    }
+                if (!data.address) {
+                    toastr.error("Заполните поле 'Адрес'");
+                    return;
+                }
+                        if (data.address.length < 5) {
+            toastr.error("Введите полный адрес");
+            return;
+        }
+                        if (isForAnother) {
 
-                    fetch('/Account/AddAddress', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                        },
-                        body: JSON.stringify(data)
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            toastr.success('Адрес успешно добавлен!');
-                            $('#addAddressModal').modal('hide');
-                            setTimeout(() => location.reload(), 800);
-                        } else {
-                            return response.text().then(text => {
-                                toastr.error(text || 'Не удалось добавить адрес');
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        toastr.error('Ошибка соединения с сервером');
-                    });
-                });
-            } else {
-                console.warn("Кнопка #btnSaveAddress не найдена!");
+            if (!data.recipientName) {
+                toastr.error("Введите имя получателя");
+                return;
             }
 
-            // === Удаление и установка основным (оставляем как было) ===
-            window.deleteAddress = function (id) {
-                if (confirm("Удалить этот адрес?")) {
-                    fetch(`/Account/DeleteAddress/${id}`, {
-                        method: 'POST',
-                        headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value }
-                    }).then(() => location.reload());
-                }
-            };
+            if (!data.phone) {
+                toastr.error("Введите телефон получателя");
+                return;
+            }
+        }
 
-            window.setDefaultAddress = function (id) {
-                if (confirm("Сделать этот адрес основным?")) {
-                    fetch(`/Account/SetDefaultAddress/${id}`, {
-                        method: 'POST',
-                        headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value }
-                    }).then(() => location.reload());
+        if (isForAnother) {
+            const name = data.recipientName.trim();
+
+            // 1. Проверка на минимальную длину
+            if (!name || name.length < 2) {
+                toastr.error("Имя получателя должно содержать минимум 2 буквы");
+                return;
+            }
+
+            // 2. Проверка на наличие цифр
+            if (/\d/.test(name)) {
+                toastr.error("Имя получателя не должно содержать цифры");
+                return;
+            }
+
+            // (Опционально) Проверка на допустимые символы
+            const nameRegex = /^[А-Яа-яЁёA-Za-z\s-]+$/;
+            if (!nameRegex.test(name)) {
+                toastr.error("Имя получателя может содержать только буквы, пробелы и дефис");
+                return;
+            }
+        }
+                         if (isForAnother) {
+
+            const phoneRegex = /^\+7\d{10}$/;
+
+            if (!phoneRegex.test(data.phone)) {
+
+                toastr.error(
+                    "Введите корректный номер телефона"
+                );
+
+                return;
+            }
+        }
+
+                fetch('/Account/AddAddress', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        toastr.success(data.message);
+                        $('#addAddressModal').modal('hide');
+                        setTimeout(() => location.reload(), 700);
+                    } else {
+                        toastr.error(data.message || 'Не удалось добавить адрес');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    toastr.error('Ошибка соединения с сервером');
+                });
+            });
+        }
+
+            // === Удаление и установка основным (оставляем как было) ===
+               const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        if (confirmDeleteBtn) {
+
+            confirmDeleteBtn.addEventListener('click', function () {
+
+                if (!addressIdToDelete)
+                    return;
+
+        fetch(`/Account/DeleteAddress/${addressIdToDelete}`, {
+            method: 'POST'
+        })
+        .then(async response => {
+
+            if (!response.ok) {
+
+                const errorData = await response.json();
+                throw new Error(errorData.message);
+            }
+
+            sessionStorage.setItem(
+                'successMessage',
+                'Адрес успешно удалён'
+            );
+
+            location.reload();
+        })
+        .catch(error => {
+
+            console.error(error);
+
+            toastr.error(error.message);
+        });
+            });
+        }
+
+        window.setDefaultAddress = function (id) {
+
+            fetch(`/Account/SetDefaultAddress/${id}`, {
+                method: 'POST'
+            })
+            .then(response => {
+
+                if (!response.ok) {
+                    throw new Error();
                 }
-            };
+
+              sessionStorage.setItem
+                (
+                'successMessage',
+                'Основной адрес изменён'
+                );
+
+            location.reload();
+                })
+                     .catch(error => {
+                     console.error(error);
+                     toastr.error('Не удалось изменить основной адрес');
+                });
+             };
         });
     </script>
 }
