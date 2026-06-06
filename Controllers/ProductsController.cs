@@ -14,13 +14,25 @@ namespace FlowerShop.Controllers
         }
 
         // Список всех товаров
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search)
         {
-            var products = await _context.Products
+            var query = _context.Products
                 .Include(p => p.Category)
-                .Where(p => p.IsActive == true)
+                .Where(p => p.IsActive);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                query = query.Where(p =>
+                    p.Name.ToLower().Contains(search.ToLower()));
+            }
+
+            var products = await query
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
+
+            ViewBag.Search = search;
 
             return View(products);
         }

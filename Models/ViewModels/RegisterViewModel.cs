@@ -77,8 +77,10 @@ namespace FlowerShop.Models.ViewModels
             ErrorMessage =
             "Пароль должен содержать минимум 6 символов")]
 
-        [RegularExpression(@"^[A-Za-z0-9]{6,}$",
-        ErrorMessage = "Пароль может содержать только латинские буквы и цифры (минимум 6 символов)")]
+        [RegularExpression(
+        @"^(?=.*[A-Za-z])(?=.*\d).{6,}$",
+        ErrorMessage = "Пароль должен содержать латинские буквы и цифры"
+        )]
 
         public string Password { get; set; }
             = string.Empty;

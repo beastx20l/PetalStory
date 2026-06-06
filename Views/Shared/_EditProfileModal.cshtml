@@ -80,6 +80,7 @@
         });
     }
     function saveProfile() {
+        $('.text-danger').text('');
 
         const form = $('#editProfileForm');
 
@@ -103,14 +104,18 @@
                     return;
                 }
 
-                if (response.errors) {
+        if (response.errors) {
 
-                    response.errors.forEach(error => {
-                        toastr.error(error);
-                    });
+        $('.text-danger').text('');
 
-                    return;
-                }
+        Object.keys(response.errors).forEach(function (key) {
+
+            $(`[data-valmsg-for="${key}"]`)
+                .text(response.errors[key]);
+        });
+
+        return;
+    }
 
                 toastr.error('Ошибка сохранения');
             },

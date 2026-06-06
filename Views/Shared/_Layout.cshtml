@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - FlowerShop</title>
+    <title>@ViewData["Title"] - PetalStory</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
@@ -33,6 +33,23 @@
         .nav-link {
             font-weight: 500;
         }
+
+        .card {
+            transition: all .3s ease;
+        }
+
+            .card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 10px 25px rgba(0,0,0,.15) !important;
+            }
+
+        .btn-success {
+            transition: all .3s ease;
+        }
+
+            .btn-success:hover {
+                transform: translateY(-2px);
+            }
     </style>
 </head>
 <body>
@@ -40,7 +57,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
             <a class="navbar-brand text-success fw-bold" href="/">
-                🌸 FlowerShop
+                PetalStory
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -132,7 +149,7 @@
     <footer class="footer bg-dark text-light py-4 mt-auto">
         <div class="container text-center">
             <p class="mb-0">
-                &copy; 2026 FlowerShop — Магазин свежих цветов с доставкой
+                &copy; 2026 PetalStory — Магазин свежих цветов с доставкой
             </p>
         </div>
     </footer>

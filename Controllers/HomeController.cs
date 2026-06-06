@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FlowerShop.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowerShop.Controllers
@@ -7,15 +8,25 @@ namespace FlowerShop.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(
+            ILogger<HomeController> logger,
+            ApplicationDbContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
         public IActionResult Index()
         {
-            return View();
+            var products = _context.Products
+                .Where(p => p.IsActive)
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(4)
+                .ToList();
+
+            return View(products);
         }
 
         public IActionResult Privacy()

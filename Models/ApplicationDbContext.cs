@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetalStory.Models;
-using System.Data;
 
 namespace FlowerShop.Models
 {

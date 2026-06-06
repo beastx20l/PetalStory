@@ -224,6 +224,87 @@ namespace FlowerShop.Controllers
 
             return PartialView("_EditProfileModal", model);
         }
+        public IActionResult ChangePassword()
+        {
+            return PartialView(
+                "_ChangePasswordModal",
+                new ChangePasswordViewModel()
+            );
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(
+    ChangePasswordViewModel model)
+        {
+            var userIdClaim = User.FindFirst("UserId")?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim)
+                || !int.TryParse(userIdClaim, out int userId))
+            {
+                return BadRequest();
+            }
+
+            var user = _context.Users.Find(userId);
+
+            if (user == null)
+                return BadRequest();
+
+            if (!ModelState.IsValid)
+            {
+                return Json(new
+                {
+                    success = false,
+                    errors = ModelState
+                        .Where(x => x.Value != null &&
+                                    x.Value.Errors.Count > 0)
+                        .ToDictionary(
+                            k => k.Key,
+                            v => v.Value!.Errors.First().ErrorMessage
+                        )
+                });
+            }
+
+            if (user.Password != model.CurrentPassword)
+            {
+                ModelState.AddModelError(
+                    "CurrentPassword",
+                    "Указан неверный текущий пароль"
+                );
+            }
+
+            if (model.NewPassword == user.Password)
+            {
+                ModelState.AddModelError(
+                    "NewPassword",
+                    "Новый пароль должен отличаться от текущего"
+                );
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return Json(new
+                {
+                    success = false,
+                    errors = ModelState
+                        .Where(x => x.Value != null &&
+                                    x.Value.Errors.Count > 0)
+                        .ToDictionary(
+                            k => k.Key,
+                            v => v.Value!.Errors.First().ErrorMessage
+                        )
+                });
+            }
+
+            user.Password = model.NewPassword;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                message = "Пароль успешно изменён"
+            });
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -293,15 +374,38 @@ namespace FlowerShop.Controllers
                     );
                 }
             }
-            // Проверка формата Email
-            if (!System.Text.RegularExpressions.Regex.IsMatch(
-                model.Email ?? "",
-                @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
+            // Проверка Email
+            if (string.IsNullOrWhiteSpace(model.Email))
             {
                 ModelState.AddModelError(
                     "Email",
-                    "Введен неверный формат"
+                    "Введите Email"
                 );
+            }
+            else
+            {
+                model.Email = model.Email.Trim();
+
+                // Проверка на русские буквы
+                if (System.Text.RegularExpressions.Regex.IsMatch(
+                    model.Email,
+                    @"[А-Яа-яЁё]"))
+                {
+                    ModelState.AddModelError(
+                        "Email",
+                        "Email должен содержать только латинские буквы"
+                    );
+                }
+                // Проверка формата Email
+                else if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    model.Email,
+                    @"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"))
+                {
+                    ModelState.AddModelError(
+                        "Email",
+                        "Неверный формат Email"
+                    );
+                }
             }
 
             // Проверка Email на дубликат
@@ -328,23 +432,22 @@ namespace FlowerShop.Controllers
 
             if (!ModelState.IsValid)
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .Distinct()
-                    .ToList();
-
                 return Json(new
                 {
                     success = false,
-                    errors = errors
+                    errors = ModelState
+                        .Where(x => x.Value != null && x.Value.Errors.Count > 0)
+                        .ToDictionary(
+                            k => k.Key,
+                            v => v.Value!.Errors.First().ErrorMessage
+                        )
                 });
             }
 
             user.FirstName = model.FirstName?.Trim();
             user.LastName = model.LastName?.Trim();
             user.Phone = model.Phone?.Trim();
-            user.Email = model.Email.Trim();
+            user.Email = model.Email?.Trim() ?? "";
 
             await _context.SaveChangesAsync();
 

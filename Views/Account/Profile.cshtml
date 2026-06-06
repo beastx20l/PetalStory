@@ -42,7 +42,10 @@
                     <button type="button" class="btn btn-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                         <i class="fa fa-edit"></i> Редактировать профиль
                     </button>
-                    <button type="button" class="btn btn-outline-primary w-100 mt-2" onclick="alert('Функция изменения пароля в разработке')">
+                    <button type="button"
+                            class="btn btn-outline-primary w-100 mt-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#changePasswordModal">
                         <i class="fa fa-key"></i> Изменить пароль
                     </button>
                 </div>
@@ -240,6 +243,10 @@ new FlowerShop.Models.ViewModels.EditProfileViewModel
     Phone = Model.Phone,
     Email = Model.Email
 })
+@await Html.PartialAsync(
+    "_ChangePasswordModal",
+    new FlowerShop.Models.ViewModels.ChangePasswordViewModel()
+)
 
 @section Scripts {
     <script>

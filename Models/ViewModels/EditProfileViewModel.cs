@@ -20,7 +20,7 @@ namespace FlowerShop.Models.ViewModels
         public string? Phone { get; set; }
 
         [Required(ErrorMessage = "Введите Email")]
-        [EmailAddress(ErrorMessage = "Некорректный Email")]
+        [EmailAddress(ErrorMessage = "Неверный формат Email")]
         public string Email { get; set; } = string.Empty;
     }
 }
