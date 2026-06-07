@@ -1,0 +1,123 @@
+﻿@model IEnumerable<FlowerShop.Models.Category>
+
+@{
+    ViewData["Title"] = "Категории";
+
+    var rootCategories = Model
+        .Where(x => x.ParentCategoryId == null)
+        .OrderBy(x => x.Id)
+        .ToList();
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h1>Категории</h1>
+
+        <a asp-action="Create"
+           class="btn btn-primary">
+            Добавить категорию
+        </a>
+
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-warning">
+            Категории отсутствуют
+        </div>
+    }
+    else
+    {
+        @foreach (var root in rootCategories)
+        {
+            <div class="card shadow-sm mb-3">
+
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+
+                    @{
+                        var totalProducts =
+                        root.Products.Count +
+                        Model.Where(x => x.ParentCategoryId == root.Id)
+                        .Sum(x => x.Products.Count);
+                    }
+
+                    <div>
+                        <strong>@root.Name</strong>
+
+                        <span class="badge bg-light text-dark ms-2">
+                            ID: @root.Id
+                        </span>
+
+                        <span class="badge bg-primary ms-2">
+                            Всего товаров: @totalProducts
+                        </span>
+
+                        <span class="badge bg-success ms-2">
+                            В категории: @root.Products.Count
+                        </span>
+                    </div>
+
+                    <a asp-action="Edit"
+                       asp-route-id="@root.Id"
+                       class="btn btn-light btn-sm">
+                        Изменить
+                    </a>
+
+                </div>
+
+                <div class="card-body">
+
+                    @{
+                        var children = Model
+                        .Where(x => x.ParentCategoryId == root.Id)
+                        .OrderBy(x => x.Id)
+                        .ToList();
+                    }
+
+                    @if (children.Any())
+                    {
+                        <ul class="list-group">
+
+                            @foreach (var child in children)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                                    <div>
+                                        └─ @child.Name
+
+                                        <span class="badge bg-secondary ms-2">
+                                            ID: @child.Id
+                                        </span>
+
+                                        <span class="badge bg-success ms-2">
+                                            Товаров: @child.Products.Count
+                                        </span>
+                                    </div>
+
+                                    <a asp-action="Edit"
+                                       asp-route-id="@child.Id"
+                                       class="btn btn-warning btn-sm">
+                                        Изменить
+                                    </a>
+
+                                </li>
+                            }
+
+                        </ul>
+                    }
+                    else
+                    {
+                        <span class="text-muted">
+                            Нет подкатегорий
+                        </span>
+                    }
+
+                </div>
+
+            </div>
+        }
+    }
+
+</div>

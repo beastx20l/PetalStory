@@ -26,6 +26,7 @@ namespace FlowerShop.Areas.Admin.Controllers
         {
             var products = await _context.Products
                 .Include(p => p.Category)
+                .OrderBy(p => p.Id)
                 .ToListAsync();
 
             return View(products);
@@ -121,6 +122,7 @@ namespace FlowerShop.Areas.Admin.Controllers
             if (!ModelState.IsValid)
             {
                 product.DiscountPercentage ??= 0;
+
                 ViewBag.Categories = new SelectList(
                     _context.Categories,
                     "Id",
@@ -141,9 +143,38 @@ namespace FlowerShop.Areas.Admin.Controllers
             dbProduct.Price = product.Price;
             dbProduct.StockQuantity = product.StockQuantity;
             dbProduct.DiscountPercentage =
-    product.DiscountPercentage ?? 0;
+                product.DiscountPercentage ?? 0;
             dbProduct.CategoryId = product.CategoryId;
             dbProduct.IsActive = product.IsActive;
+
+            // ОБНОВЛЕНИЕ ФОТО
+            if (product.ImageFile != null &&
+                product.ImageFile.Length > 0)
+            {
+                string uploadsFolder = Path.Combine(
+                    _environment.WebRootPath,
+                    "images",
+                    "products");
+
+                Directory.CreateDirectory(uploadsFolder);
+
+                string fileName =
+                    Guid.NewGuid().ToString() +
+                    Path.GetExtension(product.ImageFile.FileName);
+
+                string filePath =
+                    Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(
+                    filePath,
+                    FileMode.Create))
+                {
+                    await product.ImageFile.CopyToAsync(stream);
+                }
+
+                dbProduct.Picture =
+                    "/images/products/" + fileName;
+            }
 
             await _context.SaveChangesAsync();
 

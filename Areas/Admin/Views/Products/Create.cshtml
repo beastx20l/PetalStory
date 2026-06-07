@@ -84,16 +84,38 @@
 
             <span asp-validation-for="CategoryId"
                   class="text-danger"></span>
-            <div class="mb-3">
-                <label class="form-label">
-                    Фото товара
-                </label>
 
-                <input asp-for="ImageFile"
-                       type="file"
-                       class="form-control"
-                       accept=".jpg,.jpeg,.png,.webp" />
+        </div>
+        <div class="mb-3">
+
+            <label class="form-label">
+                Фото товара
+            </label>
+
+            <input asp-for="ImageFile"
+                   type="file"
+                   id="imageInput"
+                   accept=".jpg,.jpeg,.png,.webp"
+                   style="display:none"
+                   onchange="previewImage(event)" />
+
+            <div class="image-upload-container">
+
+                <img id="imagePreview"
+                     src="/images/no-image.jpg"
+                     onclick="document.getElementById('imageInput').click()"
+                     class="image-preview" />
+
+                <button type="button"
+                        id="removeImageBtn"
+                        class="remove-image-btn"
+                        onclick="removeImage()">
+                    ✕
+                </button>
+
             </div>
+
+        </div>
 
         <div class="form-check mb-3">
 
@@ -113,3 +135,92 @@
     </form>
 
 </div>
+
+<script>
+
+    function previewImage(event)
+    {
+        const file = event.target.files[0];
+
+        if (!file)
+            return;
+
+        const reader = new FileReader();
+
+        reader.onload = function ()
+        {
+            const preview =
+                document.getElementById("imagePreview");
+
+            preview.src = reader.result;
+
+            preview.classList.add("has-image");
+
+            document.getElementById("removeImageBtn")
+                .style.display = "flex";
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    function removeImage()
+    {
+        document.getElementById("imageInput").value = "";
+
+        const preview =
+            document.getElementById("imagePreview");
+
+        preview.src = "/images/no-image.jpg";
+
+        preview.classList.remove("has-image");
+
+        document.getElementById("removeImageBtn")
+            .style.display = "none";
+    }
+
+</script>
+
+<style>
+
+    .image-upload-container {
+        position: relative;
+        width: 350px;
+    }
+
+    .image-preview {
+        width: 350px;
+        height: 350px;
+        object-fit: cover;
+        border: 2px dashed #ced4da;
+        border-radius: 12px;
+        cursor: pointer;
+        background: #f8f9fa;
+        transition: 0.2s;
+    }
+
+        .image-preview.has-image {
+            border: none;
+        }
+
+    .remove-image-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 35px;
+        height: 35px;
+        border: none;
+        border-radius: 50%;
+        background: #dc3545;
+        color: white;
+        font-size: 18px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+        .remove-image-btn:hover {
+            background: #bb2d3b;
+        }
+
+</style>

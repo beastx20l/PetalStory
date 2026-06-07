@@ -1,0 +1,66 @@
+﻿@model FlowerShop.Models.Category
+
+@{
+    ViewData["Title"] = "Добавить категорию";
+}
+
+<div class="container mt-4">
+
+    <h1>Добавление категории</h1>
+
+    <form asp-action="Create" method="post">
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger mb-3">
+        </div>
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                Название категории
+            </label>
+
+            <input asp-for="Name"
+                   class="form-control" />
+
+            <span asp-validation-for="Name"
+                  class="text-danger"></span>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                Родительская категория
+            </label>
+
+            <select asp-for="ParentCategoryId"
+                    asp-items="ViewBag.ParentCategories"
+                    class="form-select">
+
+                <option value="">
+                    Нет (корневая категория)
+                </option>
+
+            </select>
+
+        </div>
+
+        <button type="submit"
+                class="btn btn-success">
+            Сохранить
+        </button>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            Отмена
+        </a>
+
+    </form>
+
+</div>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}
