@@ -220,5 +220,45 @@ namespace FlowerShop.Areas.Admin.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var category = await _context.Categories
+                .Include(x => x.Products)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (category == null)
+                return NotFound();
+
+            bool hasChildren = await _context.Categories
+                .AnyAsync(x => x.ParentCategoryId == id);
+
+            if (hasChildren)
+            {
+                TempData["Error"] =
+                    "Нельзя удалить категорию, у которой есть подкатегории.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (category.Products.Any())
+            {
+                TempData["Error"] =
+                    "Нельзя удалить категорию, в которой есть товары.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            _context.Categories.Remove(category);
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Категория успешно удалена.";
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
