@@ -55,36 +55,45 @@
 
                     <div class="card product-card h-100 border-0">
 
-                        <div class="product-image position-relative">
+                        <a asp-action="Details"
+                           asp-route-id="@product.Id"
+                           class="product-link">
 
-                            <img src="@(string.IsNullOrEmpty(product.Picture)
-                                              ? "/images/no-image.jpg"
-                                              : product.Picture)"
-                         alt="@product.Name">
-                    @if (product.DiscountPercentage > 0)
-                            {
-                                <span class="discount-badge">
-                                    -@product.DiscountPercentage%
-                                </span>
-                            }
+                            <div class="product-image position-relative">
 
-                        </div>
+                                <img src="@(string.IsNullOrEmpty(product.Picture)
+                                                           ? "/images/no-image.jpg"
+                                                           : product.Picture)"
+                             alt="@product.Name">
 
-                        <div class="card-body d-flex flex-column">
+                        @if (product.DiscountPercentage > 0)
+                                {
+                                    <span class="discount-badge">
+                                        -@product.DiscountPercentage%
+                                    </span>
+                                }
 
-                            <h5 class="card-title">
-                                @product.Name
-                            </h5>
+                            </div>
 
-                            <p class="text-muted small">
-                                @(product.Category?.Name ?? "Без категории")
-                            </p>
+                        </a>
+
+                        <div class="card-body d-flex flex-column p-3">
+
+                            <a asp-action="Details"
+                               asp-route-id="@product.Id"
+                               class="product-name-link">
+
+                                <h5 class="card-title">
+                                    @product.Name
+                                </h5>
+
+                            </a>
 
                             <div class="mt-auto">
 
-                                <div class="d-flex justify-content-between align-items-end mb-3">
+                                <div class="text-center mb-3">
 
-                                    <div class="price-block">
+                                    <div class="price-block mx-auto">
 
                                         @if (product.DiscountPercentage > 0)
                                         {
@@ -113,26 +122,20 @@
 
                                     </div>
 
-                                    @if (product.StockQuantity > 0)
-                                    {
-                                        <span class="badge bg-success">
-                                            В наличии
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-danger">
-                                            Нет в наличии
-                                        </span>
-                                    }
-
                                 </div>
 
-                                <a asp-action="Details"
-                                   asp-route-id="@product.Id"
-                                   class="btn btn-success w-100">
-                                    Подробнее
-                                </a>
+                                @if (product.StockQuantity > 0)
+                                {
+                                    <button class="btn btn-success w-100">
+                                        В корзину
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-secondary w-100" disabled>
+                                        Нет в наличии
+                                    </button>
+                                }
 
                             </div>
 
@@ -194,8 +197,11 @@
     }
 
     .card-title {
-        min-height: 48px;
         font-weight: 600;
+        font-size: 16px;
+        line-height: 1.3;
+        height: 42px;
+        overflow: hidden;
     }
 
     .btn-success {
@@ -207,7 +213,7 @@
     }
 
     .price-block {
-        height: 60px;
+        height: 40px;
     }
 
     .old-price {
@@ -218,12 +224,23 @@
     }
 
     .current-price {
-        font-size: 30px;
+        font-size: 34px;
         font-weight: 700;
-        line-height: 1.2;
+        line-height: 1;
     }
 
     .discount-price {
         color: #2e7d32;
+    }
+
+    .product-link,
+    .product-name-link {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .card-body {
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
     }
 </style>
