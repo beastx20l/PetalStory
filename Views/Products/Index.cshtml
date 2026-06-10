@@ -6,39 +6,220 @@
 
 <div class="container py-5">
 
-    <div class="row mb-4">
+    <div class="text-center mb-4">
 
-        <div class="col-md-8">
-            <h1 class="fw-bold">
-                Каталог товаров
-            </h1>
+        <h1 class="catalog-title">
+            Каталог цветов
+        </h1>
+
+        <p class="catalog-subtitle">
+            Авторские букеты и цветочные композиции
+        </p>
+
+        @{
+            var categories =
+            ViewBag.Categories as List<FlowerShop.Models.Category>
+            ?? new List<FlowerShop.Models.Category>();
+
+            int? selectedParentCategory =
+            ViewBag.SelectedParentCategory as int?;
+
+            int? selectedChildCategory =
+            ViewBag.SelectedChildCategory as int?;
+        }
+
+        @{
+            int parentPage = (int)(ViewBag.ParentPage ?? 1);
+            int parentPages = (int)(ViewBag.ParentPages ?? 1);
+            bool showParentPaging = parentPages > 1;
+
+            var visibleParents = categories
+            .Where(x => x.ParentCategoryId == null)
+            .OrderBy(x => x.Id)
+            .Skip((parentPage - 1) * 7)
+            .Take(7)
+            .ToList();
+        }
+        <div class="filter-title-chip">
+            Категории
+        </div>
+        <div class="categories-wrapper">
+
+            @if (showParentPaging && parentPage > 1)
+            {
+                <a asp-action="Index"
+                   asp-route-parentPage="@(parentPage - 1)"
+                   asp-route-parentCategoryId="@selectedParentCategory"
+                   asp-route-childCategoryId="@selectedChildCategory"
+                   class="scroll-btn">
+
+                    &#10094;
+
+                </a>
+            }
+
+            <div class="catalog-categories">
+
+                <a asp-action="Index"
+                   class="category-chip @(selectedParentCategory == null && selectedChildCategory == null ? "active" : "")">
+
+                    Все товары
+
+                </a>
+
+                @foreach (var parent in visibleParents)
+                {
+                    <a asp-action="Index"
+                       asp-route-parentCategoryId="@parent.Id"
+                       class="category-chip @(selectedParentCategory == parent.Id ? "active" : "")">
+
+                        @parent.Name
+
+                    </a>
+                }
+
+            </div>
+
+            @if (showParentPaging && parentPage < parentPages)
+            {
+                <a asp-action="Index"
+                   asp-route-parentPage="@(parentPage + 1)"
+                   asp-route-parentCategoryId="@selectedParentCategory"
+                   asp-route-childCategoryId="@selectedChildCategory"
+                   class="scroll-btn">
+
+                    &#10095;
+
+                </a>
+            }
+
         </div>
 
-        <div class="col-md-4">
+        @if (selectedParentCategory.HasValue)
+        {
+            var childCategories = categories
+            .Where(x => x.ParentCategoryId == selectedParentCategory)
+            .OrderBy(x => x.Id)
+            .ToList();
+            int childPage =
+            (int)(ViewBag.ChildPage ?? 1);
 
-            <form method="get">
+            int childPages =
+            (int)(ViewBag.ChildPages ?? 1);
+            bool showChildPaging = childPages > 1;
 
-                <div class="input-group">
+            var visibleChildren = childCategories
+            .Skip((childPage - 1) * 7)
+            .Take(7)
+            .ToList();
+            if (childCategories.Any())
+            {
+                <div class="filter-title-chip">
+                    Подкатегории
+                </div>
+            <div class="categories-wrapper">
+                    @if (showChildPaging && childPage > 1)
+                    {
+                        <a asp-action="Index"
+                           asp-route-parentCategoryId="@selectedParentCategory"
+                           asp-route-childPage="@(childPage - 1)"
+                           class="scroll-btn">
 
-                    <input type="text"
-                           name="search"
-                           value="@ViewBag.Search"
-                           class="form-control"
-                           placeholder="Поиск товаров..." />
+                            ❮
 
-                    <button type="submit"
-                            class="btn btn-success">
-                        Найти
-                    </button>
+                        </a>
+                    }
+                <div class="catalog-subcategories"
+                     id="subCategoriesRow">
+
+                    <a asp-action="Index"
+                       asp-route-parentCategoryId="@selectedParentCategory"
+                       class="category-chip @(selectedChildCategory == null ? "active" : "")">
+
+                        Все
+
+                    </a>
+
+                        @foreach (var child in visibleChildren)
+                    {
+                        <a asp-action="Index"
+                           asp-route-parentCategoryId="@selectedParentCategory"
+                           asp-route-childCategoryId="@child.Id"
+                           class="category-chip subcategory-chip @(selectedChildCategory == child.Id ? "active" : "")">
+
+                            @child.Name
+
+                        </a>
+                    }
 
                 </div>
+                    @if (showChildPaging && childPage < childPages)
+                    {
+                        <a asp-action="Index"
+                           asp-route-parentCategoryId="@selectedParentCategory"
+                           asp-route-childPage="@(childPage + 1)"
+                           class="scroll-btn">
 
-            </form>
+                            ❯
+
+                        </a>
+                    }
+            </div>
+            }
+        }
+
+    </div>
+    <div class="sorting-section">
+
+        <div class="filter-title-chip">
+            Сортировка
+        </div>
+
+        <div class="catalog-categories">
+
+            <a href="#"
+               class="category-chip active">
+                Популярные
+            </a>
+
+            <a href="#"
+               class="category-chip">
+                Новинки
+            </a>
+
+            <a href="#"
+               class="category-chip">
+                Сначала дешевле
+            </a>
+
+            <a href="#"
+               class="category-chip">
+                Сначала дороже
+            </a>
+
+            <a href="#"
+               class="category-chip">
+                Со скидкой
+            </a>
 
         </div>
 
     </div>
+    <div class="reset-filters-wrapper">
 
+        <a asp-action="Index"
+           class="reset-filters-btn">
+
+            Сбросить фильтры
+
+        </a>
+
+    </div>
+    <div class="catalog-count-bottom">
+        <span class="catalog-count-chip">
+            Найдено товаров: @Model.Count
+        </span>
+    </div>
     @if (!Model.Any())
     {
         <div class="alert alert-warning text-center">
@@ -91,7 +272,7 @@
 
                             <div class="mt-auto">
 
-                                <div class="text-center mb-3">
+                                <div class="text-center mb-4">
 
                                     <div class="price-block mx-auto">
 
@@ -126,9 +307,20 @@
 
                                 @if (product.StockQuantity > 0)
                                 {
-                                    <button class="btn btn-success w-100">
-                                        В корзину
-                                    </button>
+                                    <form class="add-to-cart-form">
+
+                                        <input type="hidden"
+                                               name="productId"
+                                               value="@product.Id" />
+
+                                        <button type="submit"
+                                                class="btn btn-success w-100">
+
+                                            В корзину
+
+                                        </button>
+
+                                    </form>
                                 }
                                 else
                                 {
@@ -150,11 +342,66 @@
     }
 
 </div>
+<script>
+
+    document.querySelectorAll('.add-to-cart-form')
+    .forEach(form => {
+
+        form.addEventListener('submit', async function (e) {
+
+            e.preventDefault();
+
+            const productId =
+                this.querySelector('[name="productId"]').value;
+
+            const response = await fetch('/Cart/Add', {
+
+                method: 'POST',
+
+                headers: {
+                    'Content-Type':
+                    'application/x-www-form-urlencoded'
+                },
+
+                body:
+                    `productId=${productId}`
+            });
+
+            const result =
+                await response.json();
+
+            if (result.success) {
+
+                document.getElementById('cart-count')
+                    .textContent = result.count;
+
+                toastr.success(
+                    'Товар добавлен в корзину'
+                );
+            }
+        });
+    });
+
+</script>
+<script>
+
+    function scrollCategories(id, amount)
+    {
+        document
+            .getElementById(id)
+            .scrollBy({
+                left: amount,
+                behavior: 'smooth'
+            });
+    }
+
+</script>
 <style>
     .product-card {
         border-radius: 16px;
         overflow: hidden;
         transition: all .25s ease;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
     }
 
         .product-card:hover {
@@ -198,39 +445,55 @@
 
     .card-title {
         font-weight: 600;
-        font-size: 16px;
+        font-size: 18px;
         line-height: 1.3;
-        height: 42px;
+        height: 48px;
         overflow: hidden;
+        text-align: center;
+        margin-bottom: 8px;
     }
 
-    .btn-success {
-        border-radius: 10px;
+        .btn-success
+    {
+        background: #ffbbb7;
+        border-color: #ffbbb7;
+        color: #222 !important;
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(255, 187, 183, .35);
     }
+
+        .btn-success:hover {
+            background: #ffaea9;
+            border-color: #ffaea9;
+            color: #111 !important;
+            transform: translateY(-2px);
+        }
 
     .badge {
         border-radius: 8px;
     }
 
     .price-block {
-        height: 40px;
+        height: 34px;
     }
 
     .old-price {
-        font-size: 14px;
+        font-size: 16px;
         color: #999;
         text-decoration: line-through;
         line-height: 1.1;
     }
 
     .current-price {
-        font-size: 34px;
+        font-size: 28px;
         font-weight: 700;
         line-height: 1;
-    }
-
-    .discount-price {
-        color: #2e7d32;
+        color: #72D572;
     }
 
     .product-link,
@@ -240,7 +503,187 @@
     }
 
     .card-body {
-        padding-top: 12px !important;
-        padding-bottom: 12px !important;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
     }
+
+    .catalog-title {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .catalog-subtitle {
+        color: #777;
+        font-size: 18px;
+        margin-bottom: 0;
+    }
+
+    .catalog-count {
+        color: #999;
+        font-size: 14px;
+        margin-top: 8px;
+    }
+
+    .category-chip {
+        flex-shrink: 0;
+        padding: 10px 18px;
+        border-radius: 30px;
+        background: #fff;
+        color: #444;
+        text-decoration: none;
+        border: 1px solid #eee;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all .25s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+        .category-chip:hover {
+            background: #ffbbb7;
+            color: #222;
+            border-color: #ffbbb7;
+            transform: translateY(-2px);
+        }
+
+        .category-chip.active {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+            color: #222;
+            font-weight: 600;
+        }
+
+    .subcategory-chip {
+        background: #fafafa;
+        border-color: #f0f0f0;
+        font-size: 13px;
+    }
+
+    .categories-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        margin-bottom: 20px;
+    }
+
+.scroll-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+
+    background: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-decoration: none;
+
+    color: #666;
+
+    font-size: 18px;
+    font-weight: 600;
+
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+
+    transition: all .25s ease;
+}
+
+.scroll-btn:hover {
+    background: #ffbbb7;
+    color: #222;
+    transform: scale(1.08);
+}
+
+    .catalog-categories,
+    .catalog-subcategories {
+        display: flex;
+        gap: 10px;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .disabled-btn {
+        opacity: .25;
+        pointer-events: none;
+    }
+
+    .filter-title-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 22px;
+        margin-top: 24px;
+        margin-bottom: 16px;
+        border-radius: 999px;
+        background: #fff;
+        color: #444;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: .5px;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 4px 14px rgba(0,0,0,.05);
+        width: 180px;
+    }
+
+    .catalog-count-bottom {
+        display: flex;
+        justify-content: center;
+        margin-top: 18px;
+        margin-bottom: 40px;
+    }
+
+    .catalog-count-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 18px;
+        border-radius: 30px;
+        background: white;
+        border: 1px solid #eee;
+        color: #666;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+    .sorting-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 10px;
+        margin-bottom: 25px;
+    }
+
+    .reset-filters-wrapper {
+        text-align: center;
+        margin-top: 18px;
+    }
+
+    .reset-filters-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 20px;
+        border-radius: 30px;
+        background: white;
+        color: #666;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        border: 1px solid #eee;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        transition: all .25s ease;
+    }
+
+        .reset-filters-btn:hover {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+            color: #222;
+            transform: translateY(-2px);
+        }
 </style>

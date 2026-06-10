@@ -14,25 +14,70 @@ namespace FlowerShop.Controllers
         }
 
         // Список всех товаров
-        public async Task<IActionResult> Index(string? search)
+        public async Task<IActionResult> Index(
+            string? search,
+            int? parentCategoryId,
+            int? childCategoryId,
+            int parentPage = 1,
+            int childPage = 1)
         {
             var query = _context.Products
                 .Include(p => p.Category)
                 .Where(p => p.IsActive);
 
-            if (!string.IsNullOrWhiteSpace(search))
+            if (childCategoryId.HasValue)
             {
-                search = search.Trim();
+                query = query.Where(x =>
+                    x.CategoryId == childCategoryId.Value);
+            }
+            else if (parentCategoryId.HasValue)
+            {
+                var childIds = await _context.Categories
+                    .Where(x => x.ParentCategoryId == parentCategoryId)
+                    .Select(x => x.Id)
+                    .ToListAsync();
 
-                query = query.Where(p =>
-                    p.Name.ToLower().Contains(search.ToLower()));
+                childIds.Add(parentCategoryId.Value);
+
+                query = query.Where(x =>
+                    childIds.Contains(x.CategoryId));
             }
 
             var products = await query
-                .OrderByDescending(p => p.CreatedAt)
+                .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
 
-            ViewBag.Search = search;
+            ViewBag.SelectedParentCategory = parentCategoryId;
+            ViewBag.SelectedChildCategory = childCategoryId;
+
+            var categories = await _context.Categories
+                .OrderBy(x => x.Id)
+                .ToListAsync();
+
+            ViewBag.Categories = categories;
+            var parentCategories = categories
+    .Where(x => x.ParentCategoryId == null)
+    .ToList();
+
+            const int pageSize = 7;
+
+            ViewBag.ParentPage = parentPage;
+
+            ViewBag.ParentPages =
+                (int)Math.Ceiling(
+                    (double)parentCategories.Count / pageSize);
+            if (parentCategoryId.HasValue)
+            {
+                var childCategories = categories
+                    .Where(x => x.ParentCategoryId == parentCategoryId)
+                    .ToList();
+
+                ViewBag.ChildPage = childPage;
+
+                ViewBag.ChildPages =
+                    (int)Math.Ceiling(
+                        (double)childCategories.Count / pageSize);
+            }
 
             return View(products);
         }

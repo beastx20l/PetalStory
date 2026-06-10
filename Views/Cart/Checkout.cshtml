@@ -1,0 +1,280 @@
+﻿@using PetalStory.Models
+
+@{
+    ViewData["Title"] = "Оформление заказа";
+
+    var addresses =
+        ViewBag.Addresses as List<UserAddress>
+        ?? new();
+
+    decimal total =
+        ViewBag.Total ?? 0;
+}
+
+<div class="container py-5">
+
+    <h1 class="mb-4">
+        Оформление заказа
+    </h1>
+
+    <div class="checkout-card">
+
+        <h5 class="mb-3">
+            Адрес доставки
+        </h5>
+
+        @if (addresses.Any())
+        {
+            @foreach (var address in addresses)
+            {
+                <label class="address-card">
+
+                    <input type="radio"
+                           name="addressId"
+                           value="@address.Id"
+                           @(address.IsDefault ? "checked" : "") />
+
+                    <span>
+
+                        <strong>
+                            @address.Address
+                        </strong>
+
+                        <br>
+
+                        <span class="text-muted small">
+
+                            @address.RecipientName
+
+                            @if (!string.IsNullOrEmpty(address.Phone))
+                            {
+                                <span>
+                                    • @address.Phone
+                                </span>
+                            }
+
+                        </span>
+
+                    </span>
+
+                </label>
+            }
+        }
+        <label class="address-card">
+
+            <input type="radio"
+                   name="addressId"
+                   value="0" />
+
+            <span>
+
+                <strong>
+                    Новый адрес
+                </strong>
+
+                <br>
+
+                <span class="text-muted small">
+                    Ввести другой адрес доставки
+                </span>
+
+            </span>
+
+        </label>
+        <hr />
+
+        <div id="newAddressBlock"
+             style="display:none;">
+
+            <hr />
+
+            <h5 class="mb-3">
+                Новый адрес
+            </h5>
+
+            <input id="recipientName"
+                   class="form-control mb-3"
+                   placeholder="Получатель" />
+
+            <input id="recipientPhone"
+                   class="form-control mb-3"
+                   placeholder="Телефон" />
+
+            <input id="newAddress"
+                   class="form-control mb-3"
+                   placeholder="Адрес доставки" />
+
+            <div class="form-check mb-4">
+
+                <input class="form-check-input"
+                       type="checkbox"
+                       id="saveAddress" />
+
+                <label class="form-check-label">
+
+                    Сохранить адрес
+
+                </label>
+
+            </div>
+
+        </div>
+
+        <h5 class="mb-3">
+            Комментарий
+        </h5>
+
+        <textarea id="comment"
+                  class="form-control mb-4"
+                  rows="4"></textarea>
+
+        <div class="checkout-total">
+
+            Итого:
+            @total.ToString("N0") ₽
+
+        </div>
+
+        <button id="createOrderBtn"
+                class="btn btn-success mt-4">
+
+            Подтвердить заказ
+
+        </button>
+
+    </div>
+
+</div>
+<style>
+
+    .checkout-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+
+    .address-card {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1px solid #eee;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+        .address-card:hover {
+            background: #fff7f6;
+        }
+
+    .checkout-total {
+        font-size: 28px;
+        font-weight: 700;
+        color: #72D572;
+    }
+
+</style>
+<script>
+
+    document
+    .querySelectorAll('input[name="addressId"]')
+    .forEach(radio => {
+
+        radio.addEventListener('change', function () {
+
+            const block =
+                document.getElementById(
+                    'newAddressBlock');
+
+            if (this.value == "0")
+            {
+                block.style.display = "block";
+            }
+            else
+            {
+                block.style.display = "none";
+            }
+
+        });
+
+    });
+
+</script>
+<script>
+
+    document
+    .getElementById('createOrderBtn')
+    .addEventListener('click', async () => {
+
+        const selectedAddress =
+            document.querySelector(
+                'input[name="addressId"]:checked');
+
+        const formData =
+            new URLSearchParams();
+
+        if (selectedAddress)
+        {
+            formData.append(
+                'addressId',
+                selectedAddress.value);
+        }
+
+        formData.append(
+            'newAddress',
+            document.getElementById('newAddress')?.value ?? '');
+
+        formData.append(
+            'recipientName',
+            document.getElementById('recipientName')?.value ?? '');
+
+        formData.append(
+            'recipientPhone',
+            document.getElementById('recipientPhone')?.value ?? '');
+
+        formData.append(
+            'comment',
+            document.getElementById('comment').value);
+
+        formData.append(
+            'saveAddress',
+            document.getElementById('saveAddress')?.checked ?? false);
+
+        const response =
+            await fetch('/Cart/CreateOrder', {
+
+                method: 'POST',
+
+                headers: {
+                    'Content-Type':
+                    'application/x-www-form-urlencoded'
+                },
+
+                body: formData
+            });
+
+        const result =
+            await response.json();
+
+        if (result.success)
+        {
+            toastr.success(
+                'Заказ успешно оформлен');
+
+            setTimeout(() => {
+
+                window.location =
+                    '/Account/Profile';
+
+            }, 1200);
+        }
+        else
+        {
+            toastr.error(result.message);
+        }
+    });
+
+</script>
