@@ -36,16 +36,25 @@
 
             @foreach (var item in Model)
             {
-                var price =
-                (item.Product?.Price ?? 0m) *
-                (100 - (item.Product?.DiscountPercentage ?? 0))
-                / 100m;
+                    var oldPrice =
+                    item.Product?.Price ?? 0m;
+
+                    var discount =
+                    item.Product?.DiscountPercentage ?? 0;
+
+                    var price =
+                    oldPrice *
+                    (100 - discount)
+                    / 100m;
 
                 var sum =
                 price * item.Quantity;
 
-                <div class="cart-item-card"
-                     data-cart-item="@item.Id">
+                    <div class="cart-item-card"
+                         data-cart-item="@item.Id"
+                         data-stock="@(item.Product?.StockQuantity ?? 0)"
+                         data-old-price="@oldPrice"
+                         data-discount="@discount">
 
                     <div class="cart-image">
 
@@ -56,26 +65,40 @@
 
                     </div>
 
-                    <div class="cart-info">
+                        <div class="cart-info">
 
-                        <h5 class="cart-name">
-                            @item.Product?.Name
-                        </h5>
+                            <div class="product-header">
+
+                                <h5 class="cart-name">
+                                    @item.Product?.Name
+                                </h5>
+
+                            </div>
+
+                            <div class="product-prices">
+
+                                <span class="new-price">
+                                    @price.ToString("N0") ₽
+                                </span>
+
+                        @if (discount > 0)
+                                {
+                                    <span class="old-price">
+                                        @oldPrice.ToString("N0") ₽
+                                    </span>
+
+                                    <span class="discount-tag">
+                                        -@discount%
+                                    </span>
+                                }
+
+                            </div>
+
                             <div class="stock-info">
                                 В наличии: @item.Product?.StockQuantity шт.
                             </div>
 
-                        <div class="cart-price">
-
-                            Цена за штуку:
-
-                                <span class="product-price-value">
-                                    @price.ToString("N0") ₽
-                                </span>
-
                         </div>
-
-                    </div>
 
                         <div class="cart-actions">
 
@@ -116,34 +139,37 @@
                 <div class="summary-title">
                     Ваш заказ
                 </div>
-            <div class="summary-row">
-                <span>Товаров в корзине</span>
-                <strong>@Model.Sum(x => x.Quantity)</strong>
-            </div>
+                <div class="summary-row">
+                    <span>Товаров в корзине</span>
+                    <strong id="summaryQuantity">
+                        @Model.Sum(x => x.Quantity)
+                    </strong>
+                </div>
 
-            <div class="summary-row">
-                <span>Стоимость товаров</span>
-                <strong>@totalWithoutDiscount.ToString("N0") ₽</strong>
-            </div>
+                <div class="summary-row">
+                    <span>Стоимость товаров</span>
+                    <strong id="summaryPrice">
+                        @totalWithoutDiscount.ToString("N0") ₽
+                    </strong>
+                </div>
 
                 <div class="summary-row discount-row">
+                    <span>Скидка</span>
 
-                    <span>
-                        Скидка
-                    </span>
-
-                    <div class="discount-badge">
+                    <div class="discount-badge" id="summaryDiscount">
                         -@discountAmount.ToString("N0") ₽
                     </div>
-
                 </div>
 
             <hr />
 
-                <div class="cart-total" id="cartTotal">
-                    Итого:
-                @totalWithDiscount.ToString("N0") ₽
-            </div>
+                <div class="cart-total">
+                    <span>Итого</span>
+
+                    <strong id="cartTotal">
+                        @totalWithDiscount.ToString("N0") ₽
+                    </strong>
+                </div>
             <a asp-controller="Cart"
                asp-action="Checkout"
                class="btn checkout-btn mt-3">
@@ -154,162 +180,253 @@
             </div>
         </div>
     }
+    <div class="modal fade" id="deleteCartItemModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
 
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        Подтверждение удаления
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+                </div>
+
+                <div class="modal-body text-center py-4">
+
+                    <i class="fa fa-trash text-danger mb-3"
+                       style="font-size:42px;">
+                    </i>
+
+                    <p class="fs-5 mb-0">
+                        Удалить товар из корзины?
+                    </p>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Отмена
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-danger"
+                            id="confirmRemoveCartItem">
+                        Удалить
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>
 <script>
-        function updateCartTotals() {
+    let cartItemToDelete = null;
+                document
+    .getElementById('confirmRemoveCartItem')
+    .addEventListener('click', async function () {
 
-        let total = 0;
-
-        document.querySelectorAll('.cart-item-card')
-        .forEach(card => {
-
-            const quantity =
-                parseInt(
-                    card.querySelector('.qty-value')
-                    .textContent);
-
-            const price =
-                parseFloat(
-                    card.querySelector('.cart-sum')
-                    .dataset.price);
-
-            const sum =
-                quantity * price;
-
-            card.querySelector('.cart-sum')
-                .textContent =
-                sum.toLocaleString('ru-RU') + ' ₽';
-
-            total += sum;
-        });
-
-        document.getElementById('cartTotal')
-            .textContent =
-            'Итого: ' +
-            total.toLocaleString('ru-RU') +
-            ' ₽';
-    }
-    document.querySelectorAll('.plus-btn')
-    .forEach(btn => {
-
-        btn.addEventListener('click', async function () {
-
-            const cartItemId =
-                this.dataset.id;
-
-            const response =
-                await fetch('/Cart/Increase', {
-
-                    method: 'POST',
-
-                    headers: {
-                        'Content-Type':
-                        'application/x-www-form-urlencoded'
-                    },
-
-                    body:
-                        `cartItemId=${cartItemId}`
-                });
-
-            const result =
-                await response.json();
-
-            if (result.success)
-            {
-    this.parentElement
-    .querySelector('.qty-value')
-    .textContent =
-    result.quantity;
-
-    updateCartTotals();
-            }
-        });
-    });
-
-    document.querySelectorAll('.minus-btn')
-    .forEach(btn => {
-
-        btn.addEventListener('click', async function () {
-
-            const cartItemId =
-                this.dataset.id;
-                    const currentQty =
-        parseInt(
-            this.parentElement
-                .querySelector('.qty-value')
-                .textContent);
-
-    if (currentQty === 1)
-    {
-        if (!confirm('Удалить товар из корзины?'))
+        if (!cartItemToDelete)
             return;
 
-        const response =
-            await fetch('/Cart/Remove', {
+        const response = await fetch('/Cart/Remove', {
 
-                method: 'POST',
+            method: 'POST',
 
-                headers: {
-                    'Content-Type':
-                    'application/x-www-form-urlencoded'
-                },
+            headers: {
+                'Content-Type':
+                'application/x-www-form-urlencoded'
+            },
 
-                body:
-                    `cartItemId=${cartItemId}`
-            });
+            body:
+                `cartItemId=${cartItemToDelete.id}`
+        });
 
-        const result =
-            await response.json();
+        const result = await response.json();
 
-        if (result.success)
-        {
-            this.closest('.cart-item-card')
-                .remove();
+        if (result.success) {
+
+            cartItemToDelete.card.remove();
 
             updateCartTotals();
 
+            toastr.success(
+                'Товар удалён из корзины'
+            );
+
+            bootstrap.Modal
+                .getInstance(
+                    document.getElementById('deleteCartItemModal')
+                )
+                .hide();
+
             if (
                 document.querySelectorAll('.cart-item-card')
-                .length === 0
-            )
-            {
+                    .length === 0
+            ) {
                 location.reload();
             }
         }
+        else {
+
+            toastr.error(
+                'Не удалось удалить товар'
+            );
+        }
+
+        cartItemToDelete = null;
+    });
+    // Обновление состояния кнопки "+" (активна/неактивна)
+    function updateCartItemUI(card) {
+        const qtyEl = card.querySelector('.qty-value');
+        const plusBtn = card.querySelector('.plus-btn');
+        const stock = parseInt(card.dataset.stock || '0');
+        const currentQty = parseInt(qtyEl.textContent);
+
+        if (currentQty >= stock) {
+            plusBtn.disabled = true;
+            plusBtn.style.opacity = '0.45';
+            plusBtn.style.cursor = 'not-allowed';
+        } else {
+            plusBtn.disabled = false;
+            plusBtn.style.opacity = '1';
+            plusBtn.style.cursor = 'pointer';
+        }
+    }
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.cart-item-card').forEach(card => {
+            updateCartItemUI(card);
+        });
+    });
+
+    // === Увеличение количества (+)
+    document.querySelectorAll('.plus-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const card = this.closest('.cart-item-card');
+            const stock = parseInt(card.dataset.stock || '0');
+            const qtyEl = card.querySelector('.qty-value');
+            let currentQty = parseInt(qtyEl.textContent);
+
+            if (currentQty >= stock) {
+                toastr.warning('Больше нет в наличии!');
+                return;
+            }
+
+            const cartItemId = this.dataset.id;
+
+            const response = await fetch('/Cart/Increase', {
+                   method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: `cartItemId=${cartItemId}`
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+        qtyEl.textContent = result.quantity;
+        updateCartItemUI(card);
+        updateCartTotals();
+    }
+        });
+    });
+    
+
+    // === Уменьшение количества (-)
+    document.querySelectorAll('.minus-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const cartItemId = this.dataset.id;
+            const card = this.closest('.cart-item-card');
+            const qtyEl = card.querySelector('.qty-value');
+            let currentQty = parseInt(qtyEl.textContent);
+
+    if (currentQty === 1) {
+
+        cartItemToDelete = {
+            id: cartItemId,
+            card: card
+        };
+
+        const modal = new bootstrap.Modal(
+            document.getElementById('deleteCartItemModal')
+        );
+
+        modal.show();
 
         return;
     }
 
-            const response =
-                await fetch('/Cart/Decrease', {
+            // Обычное уменьшение
+            const response = await fetch('/Cart/Decrease', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `cartItemId=${cartItemId}`
+            });
 
-                    method: 'POST',
-
-                    headers: {
-                        'Content-Type':
-                        'application/x-www-form-urlencoded'
-                    },
-
-                    body:
-                        `cartItemId=${cartItemId}`
-                });
-
-            const result =
-                await response.json();
-
-            if (result.success)
-            {
-                this.parentElement
-                    .querySelector('.qty-value')
-                    .textContent =
-                    result.quantity;
-
-    updateCartTotals();
+            const result = await response.json();
+            if (result.success) {
+                qtyEl.textContent = result.quantity;
+                updateCartItemUI(card);
+                updateCartTotals();
             }
         });
     });
-      
+
+    // === Обновление итогов ===
+    function updateCartTotals() {
+
+        let totalQuantity = 0;
+        let totalWithoutDiscount = 0;
+        let totalWithDiscount = 0;
+
+        document.querySelectorAll('.cart-item-card').forEach(card => {
+
+            const quantity =
+                parseInt(card.querySelector('.qty-value').textContent);
+
+            const discountedPrice =
+                parseFloat(card.querySelector('.cart-sum').dataset.price);
+
+            const oldPrice =
+                parseFloat(card.dataset.oldPrice);
+
+            totalQuantity += quantity;
+
+            totalWithoutDiscount += oldPrice * quantity;
+
+            totalWithDiscount += discountedPrice * quantity;
+
+            const sum = discountedPrice * quantity;
+
+            card.querySelector('.cart-sum').textContent =
+                sum.toLocaleString('ru-RU') + ' ₽';
+        });
+
+        const discount =
+            totalWithoutDiscount - totalWithDiscount;
+
+        document.getElementById('summaryQuantity').textContent =
+            totalQuantity;
+
+        document.getElementById('summaryPrice').textContent =
+            totalWithoutDiscount.toLocaleString('ru-RU') + ' ₽';
+
+        document.getElementById('summaryDiscount').textContent =
+            '-' + discount.toLocaleString('ru-RU') + ' ₽';
+
+    document.getElementById('cartTotal').textContent =
+        totalWithDiscount.toLocaleString('ru-RU') + ' ₽';
+        }
 </script>
 <style>
     .cart-layout {
@@ -324,18 +441,17 @@
     gap: 16px;
 }
 
-.cart-item-card {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+    .cart-item-card {
+        display: flex;
+        align-items: center;
+        gap: 20px;
         background: white;
         border: 1px solid #eeeeee;
-
-    border-radius: 18px;
+        border-radius: 18px;
         padding: 14px 18px;
         min-height: 120px;
-    box-shadow: 0 4px 16px rgba(0,0,0,.08);
-}
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
 
     .cart-image img {
         width: 130px;
@@ -344,22 +460,17 @@
         border-radius: 16px;
     }
 
-.cart-info {
-    flex: 1;
-}
+    .cart-info {
+        flex: 1;
+    }
 
     .cart-name {
         margin-bottom: 10px;
         font-weight: 700;
-        font-size: 22px;
-    }
-
-    .cart-price {
-        color: #777;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 16px;
+        font-size: 24px;
+        line-height: 1.2;
+        max-width: 500px;
+        word-break: break-word;
     }
 
     .cart-quantity {
@@ -377,7 +488,7 @@
         height: 38px;
         border: none;
         border-radius: 50%;
-        background: #f4a6b5;
+        background: #ffbbb7;
         color: white;
         font-size: 20px;
         font-weight: 700;
@@ -387,24 +498,16 @@
         transition: .2s;
     }
 
-    .qty-value {
-        min-width: 24px;
-        text-align: center;
-        font-size: 18px;
-        font-weight: 700;
-        color: #d87093;
-    }
-
-    .qty-btn:hover {
-        background: #e88ca0;
-        transform: scale(1.1);
-    }
+        .qty-btn:hover {
+            background: #ffaaa5;
+            transform: scale(1.1);
+        }
 
     .cart-sum {
         width: 140px;
         text-align: right;
         font-size: 28px;
-        font-weight: 800;
+        font-weight: 700;
         color: #212529;
     }
 
@@ -421,7 +524,7 @@
     .cart-total {
         font-size: 28px;
         font-weight: 700;
-        color: #d87093;
+        color: #212529;
     }
 
     .cart-item-card {
@@ -435,20 +538,30 @@
         }
 
     .checkout-btn {
-        min-width: 260px;
+        width: 100%;
         height: 58px;
-        border-radius: 16px;
-        font-size: 18px;
-        font-weight: 700;
-        background: #f4a6b5;
-        border: none;
-        color: white;
-        transition: .2s;
+        border-radius: 12px;
+        background: #ffbbb7;
+        border: 1px solid #ffbbb7;
+        color: #222 !important;
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 16px;
+        font-weight: 400;
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 12px rgba(255, 187, 183, .35);
+        transition: all .25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
     }
 
         .checkout-btn:hover {
-            background: #e88ca0;
-            color: white;
+            background: #ffaea9;
+            border-color: #ffaea9;
+            color: #111 !important;
+            transform: translateY(-2px);
         }
 
     .cart-header-card {
@@ -512,22 +625,16 @@
 
     .summary-title {
         font-size: 24px;
-        font-weight: 800;
+        font-weight: 600;
         margin-bottom: 25px;
     }
 
     .discount-badge {
-        background: #fff0f5;
-        color: #d87093;
-        padding: 6px 12px;
-        border-radius: 999px;
+        background: transparent;
+        color: #72D572;
+        padding: 0;
+        border-radius: 0;
         font-weight: 700;
-    }
-
-    .product-price-value {
-        font-size: 16px;
-        font-weight: 400;
-        color: #777;
     }
 
     .stock-info {
@@ -546,5 +653,56 @@
 
     .cart-quantity {
         margin-top: 10px;
+    }
+
+.discount-tag {
+    background: #fff0f5;
+    color: #d87093;
+
+    padding: 4px 10px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    display: inline-flex;
+    align-items: center;
+
+    height: 26px;
+}
+
+    .price-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .old-price {
+        font-size: 26px;
+        font-weight: 700;
+        color: #b0b0b0;
+        text-decoration: line-through;
+    }
+
+    .new-price {
+        font-size: 26px;
+        font-weight: 700;
+        color: #212529;
+    }
+
+    .product-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+        margin-top: 12px;
+    }
+
+    .product-prices {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
     }
 </style>

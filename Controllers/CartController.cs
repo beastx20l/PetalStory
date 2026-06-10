@@ -32,17 +32,25 @@ namespace FlowerShop.Controllers
         [HttpPost]
         public async Task<IActionResult> Add(int productId)
         {
-            int userId =
-                int.Parse(User.FindFirst("UserId")!.Value);
+            int userId = int.Parse(User.FindFirst("UserId")!.Value);
 
-            var cartItem =
-                await _context.CartItems
-                .FirstOrDefaultAsync(x =>
-                    x.UserId == userId &&
-                    x.ProductId == productId);
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == productId);
+
+            if (product == null || !product.IsActive || product.StockQuantity <= 0)
+            {
+                return Json(new { success = false, message = "Товар недоступен" });
+            }
+
+            var cartItem = await _context.CartItems
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.ProductId == productId);
 
             if (cartItem != null)
             {
+                if (cartItem.Quantity >= product.StockQuantity)
+                {
+                    return Json(new { success = false, message = "Больше нет в наличии" });
+                }
                 cartItem.Quantity++;
             }
             else
@@ -72,13 +80,23 @@ namespace FlowerShop.Controllers
         public async Task<IActionResult> Increase(int cartItemId)
         {
             var item = await _context.CartItems
+                .Include(x => x.Product)
                 .FirstOrDefaultAsync(x => x.Id == cartItemId);
 
-            if (item == null)
-                return Json(new { success = false });
+            if (item == null || item.Product == null)
+                return Json(new { success = false, message = "Товар не найден" });
+
+            // Проверка наличия на складе
+            if (item.Quantity >= item.Product.StockQuantity)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Больше нет в наличии на складе"
+                });
+            }
 
             item.Quantity++;
-
             await _context.SaveChangesAsync();
 
             return Json(new
@@ -158,12 +176,12 @@ namespace FlowerShop.Controllers
         }
         [HttpPost]
             public async Task<IActionResult> CreateOrder(
-    int? addressId,
-    string? newAddress,
-    string? recipientName,
-    string? recipientPhone,
-    bool saveAddress,
-    string? comment)
+            int? addressId,
+            string? newAddress,
+            string? recipientName,
+            string? recipientPhone,
+            bool saveAddress,
+            string? comment)
             {
                 int userId =
                     int.Parse(User.FindFirst("UserId")!.Value);
