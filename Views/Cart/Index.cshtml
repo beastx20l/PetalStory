@@ -5,6 +5,16 @@
 
     decimal total = Model.Sum(x =>
         (x.Product?.Price ?? 0) * x.Quantity);
+    decimal totalWithoutDiscount = Model.Sum(x =>
+        (x.Product?.Price ?? 0m) * x.Quantity);
+
+    decimal totalWithDiscount = Model.Sum(x =>
+        (x.Product?.Price ?? 0m) *
+        (100 - (x.Product?.DiscountPercentage ?? 0)) / 100m *
+        x.Quantity);
+
+    decimal discountAmount =
+        totalWithoutDiscount - totalWithDiscount;
 }
 
 <div class="container py-5">
@@ -12,29 +22,7 @@
     <h1 class="mb-4">
         Корзина
     </h1>
-    <div class="cart-header-card">
 
-        <div>
-            <div class="cart-header-title">
-                Товаров в корзине
-            </div>
-
-            <div class="cart-header-value">
-                @Model.Sum(x => x.Quantity)
-            </div>
-        </div>
-
-        <div>
-            <div class="cart-header-title">
-                Общая сумма
-            </div>
-
-            <div class="cart-header-value text-success">
-                @total.ToString("N0") ₽
-            </div>
-        </div>
-
-    </div>
     @if (!Model.Any())
     {
         <div class="alert alert-info">
@@ -43,12 +31,15 @@
     }
     else
     {
+        <div class="cart-layout">
         <div class="cart-items">
 
             @foreach (var item in Model)
             {
                 var price =
-                item.Product?.Price ?? 0;
+                (item.Product?.Price ?? 0m) *
+                (100 - (item.Product?.DiscountPercentage ?? 0))
+                / 100m;
 
                 var sum =
                 price * item.Quantity;
@@ -70,50 +61,51 @@
                         <h5 class="cart-name">
                             @item.Product?.Name
                         </h5>
+                            <div class="stock-info">
+                                В наличии: @item.Product?.StockQuantity шт.
+                            </div>
 
                         <div class="cart-price">
 
-                            Цена за штуку
+                            Цена за штуку:
 
-                            <span>
-                                @price.ToString("N0") ₽
-                            </span>
+                                <span class="product-price-value">
+                                    @price.ToString("N0") ₽
+                                </span>
 
                         </div>
 
                     </div>
 
-                    <div class="cart-quantity">
+                        <div class="cart-actions">
 
-                        <button class="qty-btn minus-btn"
-                                data-id="@item.Id">
-                            −
-                        </button>
+                            <div class="cart-sum"
+                                 data-price="@price">
 
-                        <span class="qty-value">
-                            @item.Quantity
-                        </span>
+                                @sum.ToString("N0") ₽
 
-                        <button class="qty-btn plus-btn"
-                                data-id="@item.Id">
-                            +
-                        </button>
+                            </div>
 
-                    </div>
 
-                    <div class="cart-sum"
-                         data-price="@price">
+                            <div class="cart-quantity">
 
-                        @sum.ToString("N0") ₽
+                                <button class="qty-btn minus-btn"
+                                        data-id="@item.Id">
+                                    −
+                                </button>
 
-                    </div>
+                                <span class="qty-value">
+                                    @item.Quantity
+                                </span>
 
-                    <button class="remove-btn delete-btn"
-                            data-id="@item.Id">
+                                <button class="qty-btn plus-btn"
+                                        data-id="@item.Id">
+                                    +
+                                </button>
 
-                        <i class="fa-solid fa-trash"></i>
+                            </div>
 
-                    </button>
+                        </div>
 
                 </div>
                 }
@@ -121,23 +113,45 @@
         </div>
 
         <div class="cart-total-box">
-
-            <div class="cart-total"
-                 id="cartTotal">
-
-                Итого:
-                @total.ToString("N0") ₽
-
+                <div class="summary-title">
+                    Ваш заказ
+                </div>
+            <div class="summary-row">
+                <span>Товаров в корзине</span>
+                <strong>@Model.Sum(x => x.Quantity)</strong>
             </div>
 
+            <div class="summary-row">
+                <span>Стоимость товаров</span>
+                <strong>@totalWithoutDiscount.ToString("N0") ₽</strong>
+            </div>
+
+                <div class="summary-row discount-row">
+
+                    <span>
+                        Скидка
+                    </span>
+
+                    <div class="discount-badge">
+                        -@discountAmount.ToString("N0") ₽
+                    </div>
+
+                </div>
+
+            <hr />
+
+                <div class="cart-total" id="cartTotal">
+                    Итого:
+                @totalWithDiscount.ToString("N0") ₽
+            </div>
             <a asp-controller="Cart"
                asp-action="Checkout"
-               class="btn btn-success checkout-btn">
+               class="btn checkout-btn mt-3">
 
                 Оформить заказ
 
             </a>
-
+            </div>
         </div>
     }
 
@@ -220,6 +234,52 @@
 
             const cartItemId =
                 this.dataset.id;
+                    const currentQty =
+        parseInt(
+            this.parentElement
+                .querySelector('.qty-value')
+                .textContent);
+
+    if (currentQty === 1)
+    {
+        if (!confirm('Удалить товар из корзины?'))
+            return;
+
+        const response =
+            await fetch('/Cart/Remove', {
+
+                method: 'POST',
+
+                headers: {
+                    'Content-Type':
+                    'application/x-www-form-urlencoded'
+                },
+
+                body:
+                    `cartItemId=${cartItemId}`
+            });
+
+        const result =
+            await response.json();
+
+        if (result.success)
+        {
+            this.closest('.cart-item-card')
+                .remove();
+
+            updateCartTotals();
+
+            if (
+                document.querySelectorAll('.cart-item-card')
+                .length === 0
+            )
+            {
+                location.reload();
+            }
+        }
+
+        return;
+    }
 
             const response =
                 await fetch('/Cart/Decrease', {
@@ -249,57 +309,15 @@
             }
         });
     });
-        document.querySelectorAll('.delete-btn')
-    .forEach(btn => {
-
-        btn.addEventListener('click', async function () {
-
-            if (!confirm('Удалить товар из корзины?'))
-                return;
-
-            const cartItemId =
-                this.dataset.id;
-
-            const response =
-                await fetch('/Cart/Remove', {
-
-                    method: 'POST',
-
-                    headers: {
-                        'Content-Type':
-                        'application/x-www-form-urlencoded'
-                    },
-
-                    body:
-                        `cartItemId=${cartItemId}`
-                });
-
-            const result =
-                await response.json();
-
-            if (result.success)
-            {
-                this.closest('.cart-item-card')
-                    .remove();
-
-                updateCartTotals();
-
-                toastr.success(
-                    'Товар удалён'
-                );
-
-                if (
-                    document.querySelectorAll('.cart-item-card')
-                    .length === 0
-                )
-                {
-                    location.reload();
-                }
-            }
-        });
-    });
+      
 </script>
 <style>
+    .cart-layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 30px;
+        align-items: start;
+    }
 .cart-items {
     display: flex;
     flex-direction: column;
@@ -310,8 +328,8 @@
     display: flex;
     align-items: center;
     gap: 20px;
-
-    background: white;
+        background: white;
+        border: 1px solid #eeeeee;
 
     border-radius: 18px;
         padding: 14px 18px;
@@ -336,63 +354,75 @@
         font-size: 22px;
     }
 
-.cart-price {
-    color: #777;
-}
+    .cart-price {
+        color: #777;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+    }
 
-.cart-quantity {
-        background: #f7f7f7;
-        border-radius: 50px;
-        padding: 8px 12px;
-}
+    .cart-quantity {
+        background: #fff0f5;
+        border: 1px solid #ffd2de;
+        border-radius: 999px;
+        padding: 6px 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
     .qty-btn {
         width: 38px;
         height: 38px;
-        background: #ffbbb7;
+        border: none;
+        border-radius: 50%;
+        background: #f4a6b5;
+        color: white;
         font-size: 20px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: .2s;
     }
 
     .qty-value {
-        min-width: 30px;
+        min-width: 24px;
         text-align: center;
+        font-size: 18px;
         font-weight: 700;
+        color: #d87093;
     }
-        .qty-btn:hover {
-            background: #ff9d96;
-            transform: scale(1.08);
-        }
+
+    .qty-btn:hover {
+        background: #e88ca0;
+        transform: scale(1.1);
+    }
 
     .cart-sum {
         width: 140px;
         text-align: right;
         font-size: 28px;
         font-weight: 800;
-        color: #198754;
+        color: #212529;
     }
-
-.remove-btn {
-    border: none;
-    background: transparent;
-
-    color: #dc3545;
-
-    font-size: 18px;
-}
 
     .cart-total-box {
         position: sticky;
-        bottom: 20px;
+        top: 100px;
         background: white;
+        border: 1px solid #eeeeee;
         border-radius: 24px;
         padding: 30px;
         box-shadow: 0 10px 30px rgba(0,0,0,.12);
     }
 
-.cart-total {
-    font-size: 28px;
-    font-weight: 700;
-}
+    .cart-total {
+        font-size: 28px;
+        font-weight: 700;
+        color: #d87093;
+    }
 
     .cart-item-card {
         transition: .25s;
@@ -400,7 +430,8 @@
 
         .cart-item-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 10px 30px rgba(0,0,0,.12);
+            border-color: #f4a6b5;
+            box-shadow: 0 10px 30px rgba(244,166,181,.25);
         }
 
     .checkout-btn {
@@ -409,10 +440,20 @@
         border-radius: 16px;
         font-size: 18px;
         font-weight: 700;
+        background: #f4a6b5;
+        border: none;
+        color: white;
+        transition: .2s;
     }
 
+        .checkout-btn:hover {
+            background: #e88ca0;
+            color: white;
+        }
+
     .cart-header-card {
-        background: white;
+        background: linear-gradient( 135deg, #fff0f5, #ffe4ec );
+        border: 1px solid #ffd2de;
         border-radius: 20px;
         padding: 20px 25px;
         margin-bottom: 25px;
@@ -429,5 +470,81 @@
     .cart-header-value {
         font-size: 28px;
         font-weight: 800;
+    }
+
+    .total-pink {
+        color: #212529;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 18px;
+    }
+
+        .summary-row span {
+            color: #666;
+        }
+
+        .summary-row strong {
+            font-size: 18px;
+        }
+
+    .discount-row strong {
+        color: #212529;
+    }
+
+    .cart-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 30px;
+        font-weight: 800;
+        margin-top: 15px;
+    }
+
+    .cart-total-box hr {
+        margin: 18px 0;
+        opacity: .15;
+    }
+
+    .summary-title {
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 25px;
+    }
+
+    .discount-badge {
+        background: #fff0f5;
+        color: #d87093;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-weight: 700;
+    }
+
+    .product-price-value {
+        font-size: 16px;
+        font-weight: 400;
+        color: #777;
+    }
+
+    .stock-info {
+        margin-top: 6px;
+        color: #999;
+        font-size: 14px;
+    }
+
+    .cart-actions {
+        width: 170px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 12px;
+    }
+
+    .cart-quantity {
+        margin-top: 10px;
     }
 </style>
