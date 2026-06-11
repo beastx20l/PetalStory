@@ -254,6 +254,8 @@
         if (result.success) {
 
             cartItemToDelete.card.remove();
+            document.getElementById('cart-count').textContent =
+            result.cartCount;
 
             updateCartTotals();
 
@@ -334,7 +336,12 @@
     const result = await response.json();
 
     if (result.success) {
+
         qtyEl.textContent = result.quantity;
+
+        document.getElementById('cart-count').textContent =
+            result.cartCount;
+
         updateCartItemUI(card);
         updateCartTotals();
     }
@@ -374,11 +381,16 @@
             });
 
             const result = await response.json();
-            if (result.success) {
-                qtyEl.textContent = result.quantity;
-                updateCartItemUI(card);
-                updateCartTotals();
-            }
+    if (result.success) {
+
+        qtyEl.textContent = result.quantity;
+
+        document.getElementById('cart-count').textContent =
+            result.cartCount;
+
+        updateCartItemUI(card);
+        updateCartTotals();
+    }
         });
     });
 
@@ -424,9 +436,14 @@
         document.getElementById('summaryDiscount').textContent =
             '-' + discount.toLocaleString('ru-RU') + ' ₽';
 
-    document.getElementById('cartTotal').textContent =
+        document.getElementById('cartTotal').textContent =
         totalWithDiscount.toLocaleString('ru-RU') + ' ₽';
+        const cartBadge = document.getElementById('cart-count');
+
+        if (cartBadge) {
+        cartBadge.textContent = totalQuantity;
         }
+    }
 </script>
 <style>
     .cart-layout {

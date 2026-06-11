@@ -99,10 +99,17 @@ namespace FlowerShop.Controllers
             item.Quantity++;
             await _context.SaveChangesAsync();
 
+            int userId = item.UserId;
+
+            var cartCount = await _context.CartItems
+                .Where(x => x.UserId == userId)
+                .SumAsync(x => x.Quantity);
+
             return Json(new
             {
                 success = true,
-                quantity = item.Quantity
+                quantity = item.Quantity,
+                cartCount = cartCount
             });
         }
 
@@ -121,10 +128,15 @@ namespace FlowerShop.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            var cartCount = await _context.CartItems
+                .Where(x => x.UserId == item.UserId)
+                .SumAsync(x => x.Quantity);
+
             return Json(new
             {
                 success = true,
-                quantity = item.Quantity
+                quantity = item.Quantity,
+                cartCount = cartCount
             });
         }
         [HttpPost]
@@ -136,11 +148,21 @@ namespace FlowerShop.Controllers
             if (item == null)
                 return Json(new { success = false });
 
+            int userId = item.UserId;
+
             _context.CartItems.Remove(item);
 
             await _context.SaveChangesAsync();
 
-            return Json(new { success = true });
+            var cartCount = await _context.CartItems
+                .Where(x => x.UserId == userId)
+                .SumAsync(x => x.Quantity);
+
+            return Json(new
+            {
+                success = true,
+                cartCount = cartCount
+            });
         }
         public async Task<IActionResult> Checkout()
         {
