@@ -49,7 +49,11 @@ namespace FlowerShop.Controllers
             {
                 if (cartItem.Quantity >= product.StockQuantity)
                 {
-                    return Json(new { success = false, message = "Больше нет в наличии" });
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"Добавлено максимальное количество. Остаток на складе: {product.StockQuantity} шт."
+                    });
                 }
                 cartItem.Quantity++;
             }
@@ -190,21 +194,32 @@ namespace FlowerShop.Controllers
             ViewBag.Addresses = addresses;
 
             decimal total = cartItems.Sum(x =>
-                (x.Product!.Price ?? 0) * x.Quantity);
+            {
+                var oldPrice = x.Product!.Price ?? 0m;
+                var discount = x.Product.DiscountPercentage ?? 0;
+
+                var discountedPrice =
+                    Math.Floor(oldPrice * (100 - discount) / 100m);
+
+                return discountedPrice * x.Quantity;
+            });
 
             ViewBag.Total = total;
 
             return View();
         }
         [HttpPost]
-            public async Task<IActionResult> CreateOrder(
-            int? addressId,
-            string? newAddress,
-            string? recipientName,
-            string? recipientPhone,
-            bool saveAddress,
-            string? comment)
-            {
+        public async Task<IActionResult> CreateOrder(
+        int? addressId,
+        string? newAddress,
+        string? recipientName,
+        string? recipientPhone,
+        bool saveAddress,
+        string? comment,
+        string? paymentMethod)
+        {
+            try
+            { 
                 int userId =
                     int.Parse(User.FindFirst("UserId")!.Value);
 
@@ -292,10 +307,18 @@ namespace FlowerShop.Controllers
                     }
                 }
 
-                decimal total = cartItems.Sum(x =>
-                    (x.Product!.Price ?? 0) * x.Quantity);
+            decimal total = cartItems.Sum(x =>
+            {
+                var oldPrice = x.Product!.Price ?? 0m;
+                var discount = x.Product.DiscountPercentage ?? 0;
 
-                var order = new Order
+                var discountedPrice =
+                    Math.Floor(oldPrice * (100 - discount) / 100m);
+
+                return discountedPrice * x.Quantity;
+            });
+
+            var order = new Order
                 {
                     UserId = userId,
                     TotalAmount = total,
@@ -303,9 +326,11 @@ namespace FlowerShop.Controllers
                     CustomerName = customerName,
                     Phone = phone,
                     DeliveryAddress = deliveryAddress,
+                    PaymentMethod = paymentMethod ?? "Не указан",
                     Comment = comment,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
+
                 };
 
                 _context.Orders.Add(order);
@@ -322,7 +347,11 @@ namespace FlowerShop.Controllers
                             ProductName = item.Product!.Name,
                             Quantity = item.Quantity,
                             PriceAtPurchase =
-                                item.Product.Price ?? 0
+    Math.Floor(
+        (item.Product.Price ?? 0m) *
+        (100 - (item.Product.DiscountPercentage ?? 0))
+        / 100m
+    )
                         });
                 }
 
@@ -332,8 +361,18 @@ namespace FlowerShop.Controllers
 
                 return Json(new
                 {
-                    success = true
+                    success = true,
+                    redirectUrl = "/Account/Profile?orderSuccess=true"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = ex.InnerException?.Message ?? ex.Message
                 });
             }
         }
+}
 }

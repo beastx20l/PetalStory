@@ -9,9 +9,17 @@
         (x.Product?.Price ?? 0m) * x.Quantity);
 
     decimal totalWithDiscount = Model.Sum(x =>
-        (x.Product?.Price ?? 0m) *
-        (100 - (x.Product?.DiscountPercentage ?? 0)) / 100m *
-        x.Quantity);
+    {
+        var oldPrice = x.Product?.Price ?? 0m;
+        var discount = x.Product?.DiscountPercentage ?? 0;
+
+        var discountedPrice =
+            Math.Floor(
+                oldPrice * (100 - discount) / 100m
+            );
+
+        return discountedPrice * x.Quantity;
+    });
 
     decimal discountAmount =
         totalWithoutDiscount - totalWithDiscount;
@@ -43,9 +51,11 @@
                     item.Product?.DiscountPercentage ?? 0;
 
                     var price =
-                    oldPrice *
-                    (100 - discount)
-                    / 100m;
+                    Math.Round(
+                    oldPrice * (100 - discount) / 100m,
+                    0,
+                    MidpointRounding.AwayFromZero
+                    );
 
                 var sum =
                 price * item.Quantity;
@@ -53,7 +63,7 @@
                     <div class="cart-item-card"
                          data-cart-item="@item.Id"
                          data-stock="@(item.Product?.StockQuantity ?? 0)"
-                         data-old-price="@oldPrice"
+                         data-old-price="@oldPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                          data-discount="@discount">
 
                     <div class="cart-image">
@@ -103,7 +113,7 @@
                         <div class="cart-actions">
 
                             <div class="cart-sum"
-                                 data-price="@price">
+                                 data-price="@price.ToString(System.Globalization.CultureInfo.InvariantCulture)">
 
                                 @sum.ToString("N0") ₽
 
@@ -411,33 +421,32 @@
 
             const oldPrice =
                 parseFloat(card.dataset.oldPrice);
-
+          
             totalQuantity += quantity;
 
             totalWithoutDiscount += oldPrice * quantity;
 
             totalWithDiscount += discountedPrice * quantity;
 
-            const sum = discountedPrice * quantity;
+    const sum = discountedPrice * quantity;
 
-            card.querySelector('.cart-sum').textContent =
-                sum.toLocaleString('ru-RU') + ' ₽';
+    card.querySelector('.cart-sum').textContent =
+        Math.round(sum).toLocaleString('ru-RU') + ' ₽';
         });
 
         const discount =
             totalWithoutDiscount - totalWithDiscount;
+            document.getElementById('summaryQuantity').textContent =
+    totalQuantity;
+           document.getElementById('summaryPrice').textContent =
+        Math.round(totalWithoutDiscount).toLocaleString('ru-RU') + ' ₽';
 
-        document.getElementById('summaryQuantity').textContent =
-            totalQuantity;
+    document.getElementById('summaryDiscount').textContent =
+        '-' + Math.round(discount).toLocaleString('ru-RU') + ' ₽';
 
-        document.getElementById('summaryPrice').textContent =
-            totalWithoutDiscount.toLocaleString('ru-RU') + ' ₽';
+    document.getElementById('cartTotal').textContent =
+        Math.round(totalWithDiscount).toLocaleString('ru-RU') + ' ₽';
 
-        document.getElementById('summaryDiscount').textContent =
-            '-' + discount.toLocaleString('ru-RU') + ' ₽';
-
-        document.getElementById('cartTotal').textContent =
-        totalWithDiscount.toLocaleString('ru-RU') + ' ₽';
         const cartBadge = document.getElementById('cart-count');
 
         if (cartBadge) {

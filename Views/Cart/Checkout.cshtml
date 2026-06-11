@@ -22,7 +22,7 @@
         <h5 class="mb-3">
             Адрес доставки
         </h5>
-
+        <div class="addresses-container">
         @if (addresses.Any())
         {
             @foreach (var address in addresses)
@@ -60,28 +60,28 @@
                 </label>
             }
         }
-        <label class="address-card">
+            <label class="address-card">
 
-            <input type="radio"
-                   name="addressId"
-                   value="0" />
+                <input type="radio"
+                       name="addressId"
+                       value="0" />
 
-            <span>
+                <span>
 
-                <strong>
-                    Новый адрес
-                </strong>
+                    <strong>
+                        Новый адрес
+                    </strong>
 
-                <br>
+                    <br>
 
-                <span class="text-muted small">
-                    Ввести другой адрес доставки
+                    <span class="text-muted small">
+                        Ввести другой адрес доставки
+                    </span>
+
                 </span>
 
-            </span>
-
-        </label>
-        <hr />
+            </label>
+        </div>
 
         <div id="newAddressBlock"
              style="display:none;">
@@ -98,7 +98,8 @@
 
             <input id="recipientPhone"
                    class="form-control mb-3"
-                   placeholder="Телефон" />
+                   placeholder="Телефон"
+                   maxlength="12" />
 
             <input id="newAddress"
                    class="form-control mb-3"
@@ -135,18 +136,112 @@
 
         </div>
 
-        <button id="createOrderBtn"
+        <button id="openPaymentModal"
                 class="btn btn-success mt-4">
 
-            Подтвердить заказ
+            Перейти к оплате
 
         </button>
 
     </div>
+    <div class="modal fade"
+         id="paymentModal"
+         tabindex="-1">
 
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        Способ оплаты
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="form-check mb-3">
+
+                        <input class="form-check-input"
+                               type="radio"
+                               name="paymentMethod"
+                               id="cardPayment"
+                               value="paymentCard"
+                               checked>
+
+                        <label class="form-check-label"
+                               for="cardPayment">
+
+                            Банковская карта
+
+                        </label>
+
+                    </div>
+
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+                               type="radio"
+                               name="paymentMethod"
+                               id="sbpPayment"
+                               value="paymentSBP">
+
+                        <label class="form-check-label"
+                               for="sbpPayment">
+
+                            СБП
+
+                        </label>
+
+                    </div>
+
+                    <div class="fw-bold fs-5">
+
+                        К оплате:
+                        @total.ToString("N0") ₽
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+
+                        Отмена
+
+                    </button>
+
+                    <button type="button"
+                            id="createOrderBtn"
+                            class="btn btn-success">
+
+                        Оплатить
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 </div>
 <style>
-
+    .is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 .15rem rgba(220,53,69,.15);
+    }
     .checkout-card {
         background: white;
         border-radius: 20px;
@@ -174,6 +269,16 @@
         font-size: 28px;
         font-weight: 700;
         color: #72D572;
+    }
+
+    #comment {
+        resize: none;
+    }
+
+    .addresses-container {
+        max-height: 330px;
+        overflow-y: auto;
+        padding-right: 6px;
     }
 
 </style>
@@ -205,9 +310,32 @@
 </script>
 <script>
 
+    function clearValidation()
+    {
+        document
+            .querySelectorAll('.is-invalid')
+            .forEach(x => x.classList.remove('is-invalid'));
+    }
+
+</script>
+<script>
+        document
+    .getElementById('openPaymentModal')
+    .addEventListener('click', function () {
+
+        const modal =
+            new bootstrap.Modal(
+                document.getElementById('paymentModal')
+            );
+
+        modal.show();
+
+    });
     document
     .getElementById('createOrderBtn')
     .addEventListener('click', async () => {
+
+        clearValidation();
 
         const selectedAddress =
             document.querySelector(
@@ -238,11 +366,120 @@
         formData.append(
             'comment',
             document.getElementById('comment').value);
+                const paymentMethod =
+        document.querySelector(
+            'input[name="paymentMethod"]:checked'
+        )?.value;
+
+    formData.append(
+        'paymentMethod',
+        paymentMethod);
 
         formData.append(
             'saveAddress',
             document.getElementById('saveAddress')?.checked ?? false);
+                const isNewAddress =
+        selectedAddress &&
+        selectedAddress.value == "0";
 
+    if (isNewAddress)
+    {
+        const address =
+            document.getElementById('newAddress')
+            .value.trim();
+
+        const recipient =
+            document.getElementById('recipientName')
+            .value.trim();
+
+        const phone =
+            document.getElementById('recipientPhone')
+            .value.trim();
+
+    if (!address)
+    {
+        document
+            .getElementById('newAddress')
+            .classList.add('is-invalid');
+
+        toastr.error("Введите адрес доставки");
+        return;
+    }
+
+    if (address.length < 5)
+    {
+        document
+            .getElementById('newAddress')
+            .classList.add('is-invalid');
+
+        toastr.error("Введите полный адрес");
+        return;
+    }
+
+    if (!recipient)
+    {
+        document
+            .getElementById('recipientName')
+            .classList.add('is-invalid');
+
+        toastr.error("Введите имя получателя");
+        return;
+    }
+
+    if (recipient.length < 2)
+    {
+        document
+            .getElementById('recipientName')
+            .classList.add('is-invalid');
+
+        toastr.error(
+            "Имя получателя должно содержать минимум 2 буквы"
+        );
+        return;
+    }
+
+    if (/\d/.test(recipient))
+    {
+        document
+            .getElementById('recipientName')
+            .classList.add('is-invalid');
+
+        toastr.error(
+            "Имя получателя не должно содержать цифры"
+        );
+        return;
+    }
+
+        const nameRegex =
+            /^[А-Яа-яЁёA-Za-z\s-]+$/;
+
+    if (!nameRegex.test(recipient))
+    {
+        document
+            .getElementById('recipientName')
+            .classList.add('is-invalid');
+
+        toastr.error(
+            "Имя получателя может содержать только буквы, пробелы и дефис"
+        );
+        return;
+    }
+
+        const phoneRegex =
+            /^\+7\d{10}$/;
+
+    if (!phoneRegex.test(phone))
+    {
+        document
+            .getElementById('recipientPhone')
+            .classList.add('is-invalid');
+
+        toastr.error(
+            "Введите корректный номер телефона"
+        );
+        return;
+    }
+    }
         const response =
             await fetch('/Cart/CreateOrder', {
 
@@ -259,22 +496,64 @@
         const result =
             await response.json();
 
-        if (result.success)
-        {
-            toastr.success(
-                'Заказ успешно оформлен');
-
-            setTimeout(() => {
-
-                window.location =
-                    '/Account/Profile';
-
-            }, 1200);
-        }
+    if (result.success)
+    {
+        window.location = result.redirectUrl;
+    }
         else
         {
             toastr.error(result.message);
         }
     });
+        document.addEventListener('DOMContentLoaded', function () {
 
+        const phoneInput =
+            document.getElementById('recipientPhone');
+
+        if (!phoneInput)
+            return;
+
+        phoneInput.addEventListener('focus', function () {
+
+            if (!this.value) {
+                this.value = '+7';
+            }
+
+        });
+
+        phoneInput.addEventListener('input', function () {
+
+            let value =
+                this.value.replace(/[^\d+]/g, '');
+
+            if (!value.startsWith('+7')) {
+                value = '+7';
+            }
+
+            value =
+                '+7' +
+                value.substring(2)
+                     .replace(/\D/g, '');
+
+            if (value.length > 12) {
+                value = value.substring(0, 12);
+            }
+
+            this.value = value;
+        });
+
+    });
+    document
+    .querySelectorAll(
+        '#newAddress, #recipientName, #recipientPhone'
+    )
+    .forEach(input => {
+
+        input.addEventListener('input', function () {
+
+            this.classList.remove('is-invalid');
+
+        });
+
+    });
 </script>
