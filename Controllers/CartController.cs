@@ -32,6 +32,14 @@ namespace FlowerShop.Controllers
         [HttpPost]
         public async Task<IActionResult> Add(int productId)
         {
+            if (!User.Identity!.IsAuthenticated)
+            {
+                return Json(new
+                {
+                    success = false,
+                    needLogin = true
+                });
+            }
             int userId = int.Parse(User.FindFirst("UserId")!.Value);
 
             var product = await _context.Products

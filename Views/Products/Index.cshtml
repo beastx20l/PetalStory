@@ -402,21 +402,27 @@
             const productId =
                 this.querySelector('[name="productId"]').value;
 
-            const response = await fetch('/Cart/Add', {
+    const response = await fetch('/Cart/Add', {
 
-                method: 'POST',
+        method: 'POST',
 
-                headers: {
-                    'Content-Type':
-                    'application/x-www-form-urlencoded'
-                },
+        headers: {
+            'Content-Type':
+            'application/x-www-form-urlencoded'
+        },
 
-                body:
-                    `productId=${productId}`
-            });
+        body:
+            `productId=${productId}`
+    });
 
-            const result =
-                await response.json();
+    if (response.redirected)
+    {
+        window.location.href = response.url;
+        return;
+    }
+
+    const result =
+        await response.json();
 
             if (result.success) {
 
@@ -1053,66 +1059,7 @@
             display: none;
         }
 </style>
-<script>
 
-    document.querySelectorAll('.add-to-cart-form')
-    .forEach(form => {
-
-        form.addEventListener('submit', async function (e) {
-
-            e.preventDefault();
-
-            const productId =
-                this.querySelector('[name="productId"]').value;
-
-            const response = await fetch('/Cart/Add', {
-
-                method: 'POST',
-
-                headers: {
-                    'Content-Type':
-                    'application/x-www-form-urlencoded'
-                },
-
-                body:
-                    `productId=${productId}`
-            });
-
-            const result =
-                await response.json();
-
-            if (result.success) {
-
-                document.getElementById('cart-count')
-                    .textContent = result.count;
-
-                toastr.success(
-                    'Товар добавлен в корзину'
-                );
-            }
-                else 
-                {
-                toastr.warning(
-                result.message
-                );
-                }
-        });
-    });
-
-</script>
-<script>
-
-    function scrollCategories(id, amount)
-    {
-        document
-            .getElementById(id)
-            .scrollBy({
-                left: amount,
-                behavior: 'smooth'
-            });
-    }
-
-</script>
 <script>
     function toggleCategories() {
 
@@ -1761,6 +1708,22 @@
             background: #ffbbb7;
             border-color: #ffbbb7;
             color: #222;
+        }
+
+    .btn-success,
+    .btn-success:hover,
+    .btn-success:active,
+    .btn-success:focus,
+    .btn-success:focus:active {
+        background: #ffbbb7 !important;
+        border-color: #ffbbb7 !important;
+        color: #222 !important;
+    }
+
+        .btn-success:active,
+        .btn-success:focus:active {
+            background: #ff9f99 !important;
+            border-color: #ff9f99 !important;
         }
 </style>
 <script>
