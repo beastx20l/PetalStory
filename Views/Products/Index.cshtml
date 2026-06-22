@@ -2,346 +2,1057 @@
 
 @{
     ViewData["Title"] = "Каталог товаров";
+
+    var minPrice =
+        Context.Request.Query["minPrice"]
+        .FirstOrDefault() ?? "0";
+
+    var maxPrice =
+        Context.Request.Query["maxPrice"]
+        .FirstOrDefault() ?? "10000";
+    ViewBag.MinPrice = minPrice;
+    ViewBag.MaxPrice = maxPrice;
 }
 
 <div class="container py-5">
+    <h1 class="catalog-title">
+        Каталог цветов
+    </h1>
 
-    <div class="text-center mb-4">
+    <p class="catalog-subtitle">
+        Авторские букеты и цветочные композиции
+    </p>
+    <div style="height:40px;"></div>
+    <div class="catalog-layout">
 
-        <h1 class="catalog-title">
-            Каталог цветов
-        </h1>
+        <div class="catalog-sidebar">
 
-        <p class="catalog-subtitle">
-            Авторские букеты и цветочные композиции
-        </p>
+            <div class="text-center mb-4">
 
-        @{
-            var categories =
-            ViewBag.Categories as List<FlowerShop.Models.Category>
-            ?? new List<FlowerShop.Models.Category>();
 
-            int? selectedParentCategory =
-            ViewBag.SelectedParentCategory as int?;
 
-            int? selectedChildCategory =
-            ViewBag.SelectedChildCategory as int?;
-        }
+                @{
+                    var categories =
+                    ViewBag.Categories as List<FlowerShop.Models.Category>
+                    ?? new List<FlowerShop.Models.Category>();
 
-        @{
-            int parentPage = (int)(ViewBag.ParentPage ?? 1);
-            int parentPages = (int)(ViewBag.ParentPages ?? 1);
-            bool showParentPaging = parentPages > 1;
+                    int? selectedParentCategory =
+                    ViewBag.SelectedParentCategory as int?;
 
-            var visibleParents = categories
-            .Where(x => x.ParentCategoryId == null)
-            .OrderBy(x => x.Id)
-            .Skip((parentPage - 1) * 7)
-            .Take(7)
-            .ToList();
-        }
-        <div class="filter-title-chip">
-            Категории
-        </div>
-        <div class="categories-wrapper">
-
-            @if (showParentPaging && parentPage > 1)
-            {
-                <a asp-action="Index"
-                   asp-route-parentPage="@(parentPage - 1)"
-                   asp-route-parentCategoryId="@selectedParentCategory"
-                   asp-route-childCategoryId="@selectedChildCategory"
-                   class="scroll-btn">
-
-                    &#10094;
-
-                </a>
-            }
-
-            <div class="catalog-categories">
-
-                <a asp-action="Index"
-                   class="category-chip @(selectedParentCategory == null && selectedChildCategory == null ? "active" : "")">
-
-                    Все товары
-
-                </a>
-
-                @foreach (var parent in visibleParents)
-                {
-                    <a asp-action="Index"
-                       asp-route-parentCategoryId="@parent.Id"
-                       class="category-chip @(selectedParentCategory == parent.Id ? "active" : "")">
-
-                        @parent.Name
-
-                    </a>
+                    int? selectedChildCategory =
+                    ViewBag.SelectedChildCategory as int?;
                 }
 
-            </div>
+                @{
+                    int parentPage = (int)(ViewBag.ParentPage ?? 1);
+                    int parentPages = (int)(ViewBag.ParentPages ?? 1);
+                    bool showParentPaging = parentPages > 1;
 
-            @if (showParentPaging && parentPage < parentPages)
-            {
-                <a asp-action="Index"
-                   asp-route-parentPage="@(parentPage + 1)"
-                   asp-route-parentCategoryId="@selectedParentCategory"
-                   asp-route-childCategoryId="@selectedChildCategory"
-                   class="scroll-btn">
-
-                    &#10095;
-
-                </a>
-            }
-
-        </div>
-
-        @if (selectedParentCategory.HasValue)
-        {
-            var childCategories = categories
-            .Where(x => x.ParentCategoryId == selectedParentCategory)
-            .OrderBy(x => x.Id)
-            .ToList();
-            int childPage =
-            (int)(ViewBag.ChildPage ?? 1);
-
-            int childPages =
-            (int)(ViewBag.ChildPages ?? 1);
-            bool showChildPaging = childPages > 1;
-
-            var visibleChildren = childCategories
-            .Skip((childPage - 1) * 7)
-            .Take(7)
-            .ToList();
-            if (childCategories.Any())
-            {
-                <div class="filter-title-chip">
-                    Подкатегории
+                    var visibleParents = categories
+                    .Where(x => x.ParentCategoryId == null)
+                    .OrderBy(x => x.Id)
+                    .ToList();
+                }
+                <div class="filter-title-chip category-toggle"
+                     onclick="togglePrice()">
+                    Цена
                 </div>
-            <div class="categories-wrapper">
-                    @if (showChildPaging && childPage > 1)
-                    {
-                        <a asp-action="Index"
-                           asp-route-parentCategoryId="@selectedParentCategory"
-                           asp-route-childPage="@(childPage - 1)"
-                           class="scroll-btn">
 
-                            ❮
+                <div class="price-wrapper" id="priceBlock">
 
-                        </a>
-                    }
-                <div class="catalog-subcategories"
-                     id="subCategoriesRow">
+                    <div class="price-filter">
 
-                    <a asp-action="Index"
-                       asp-route-parentCategoryId="@selectedParentCategory"
-                       class="category-chip @(selectedChildCategory == null ? "active" : "")">
+                        <div class="price-inputs">
 
-                        Все
+                            <input type="text"
+                                   id="minPriceText"
+                                   value="@ViewBag.MinPrice" />
 
-                    </a>
+                            <input type="text"
+                                   id="maxPriceText"
+                                   value="@(ViewBag.MaxPrice == "10000" ? "10000+" : ViewBag.MaxPrice)" />
 
-                        @foreach (var child in visibleChildren)
-                    {
-                        <a asp-action="Index"
-                           asp-route-parentCategoryId="@selectedParentCategory"
-                           asp-route-childCategoryId="@child.Id"
-                           class="category-chip subcategory-chip @(selectedChildCategory == child.Id ? "active" : "")">
+                        </div>
 
-                            @child.Name
+                        <div class="range-slider">
 
-                        </a>
-                    }
+                            <div class="slider-track"></div>
+                            <div class="slider-range" id="sliderRange"></div>
 
+                            <input type="range"
+                                   id="minPrice"
+                                   min="0"
+                                   max="10000"
+                                   step="100"
+                                   value="@ViewBag.MinPrice">
+
+                            <input type="range"
+                                   id="maxPrice"
+                                   min="0"
+                                   max="10000"
+                                   step="100"
+                                   value="@ViewBag.MaxPrice">
+
+                        </div>
+                    </div>
                 </div>
-                    @if (showChildPaging && childPage < childPages)
-                    {
-                        <a asp-action="Index"
-                           asp-route-parentCategoryId="@selectedParentCategory"
-                           asp-route-childPage="@(childPage + 1)"
-                           class="scroll-btn">
+                <div class="filter-title-chip category-toggle" onclick="toggleCategories()">
+                    Тип букета
+                </div>
+                <div class="categories-wrapper" id="categoriesBlock">
 
-                            ❯
 
-                        </a>
-                    }
-            </div>
-            }
-        }
 
-    </div>
-    <div class="sorting-section">
+                    <div class="catalog-categories">
+                        @foreach (var parent in visibleParents)
+                        {
+                            <a asp-action="Index"
+                               asp-route-parentCategoryId="@parent.Id"
+                               asp-route-minPrice="@ViewBag.MinPrice"
+                               asp-route-maxPrice="@ViewBag.MaxPrice"
+                               asp-route-sort="@ViewBag.Sort"
+                               class="category-chip @(selectedParentCategory == parent.Id ? "active" : "")">
 
-        <div class="filter-title-chip">
-            Сортировка
-        </div>
-
-        <div class="catalog-categories">
-
-            <a href="#"
-               class="category-chip active">
-                Популярные
-            </a>
-
-            <a href="#"
-               class="category-chip">
-                Новинки
-            </a>
-
-            <a href="#"
-               class="category-chip">
-                Сначала дешевле
-            </a>
-
-            <a href="#"
-               class="category-chip">
-                Сначала дороже
-            </a>
-
-            <a href="#"
-               class="category-chip">
-                Со скидкой
-            </a>
-
-        </div>
-
-    </div>
-    <div class="reset-filters-wrapper">
-
-        <a asp-action="Index"
-           class="reset-filters-btn">
-
-            Сбросить фильтры
-
-        </a>
-
-    </div>
-    <div class="catalog-count-bottom">
-        <span class="catalog-count-chip">
-            Найдено товаров: @Model.Count
-        </span>
-    </div>
-    @if (!Model.Any())
-    {
-        <div class="alert alert-warning text-center">
-            Товары не найдены
-        </div>
-    }
-    else
-    {
-        <div class="row g-4">
-
-            @foreach (var product in Model)
-            {
-                <div class="col-md-6 col-lg-4 col-xl-3">
-
-                    <div class="card product-card h-100 border-0">
-
-                        <a asp-action="Details"
-                           asp-route-id="@product.Id"
-                           class="product-link">
-
-                            <div class="product-image position-relative">
-
-                                <img src="@(string.IsNullOrEmpty(product.Picture)
-                                                           ? "/images/no-image.jpg"
-                                                           : product.Picture)"
-                             alt="@product.Name">
-
-                        @if (product.DiscountPercentage > 0)
-                                {
-                                    <span class="discount-badge">
-                                        -@product.DiscountPercentage%
-                                    </span>
-                                }
-
-                            </div>
-
-                        </a>
-
-                        <div class="card-body d-flex flex-column p-3">
-
-                            <a asp-action="Details"
-                               asp-route-id="@product.Id"
-                               class="product-name-link">
-
-                                <h5 class="card-title">
-                                    @product.Name
-                                </h5>
+                                @parent.Name
 
                             </a>
 
-                            <div class="mt-auto">
+                            @if (selectedParentCategory == parent.Id)
+                            {
+                                var childCategories = categories
+                                .Where(x => x.ParentCategoryId == parent.Id)
+                                .OrderBy(x => x.Id)
+                                .ToList();
 
-                                <div class="text-center mb-4">
+                                foreach (var child in childCategories)
+                                {
+                                    <a asp-action="Index"
+                                       asp-route-parentCategoryId="@parent.Id"
+                                       asp-route-childCategoryId="@child.Id"
+                                       asp-route-minPrice="@ViewBag.MinPrice"
+                                       asp-route-maxPrice="@ViewBag.MaxPrice"
+                                       asp-route-sort="@ViewBag.Sort"
+                                       class="category-chip subcategory-chip @(selectedChildCategory == child.Id ? "active" : "")">
 
-                                    <div class="price-block mx-auto">
+                                        @child.Name
 
-                                        @if (product.DiscountPercentage > 0)
-                                        {
-                                            decimal discountedPrice =
-                                            product.Price.GetValueOrDefault() *
-                                            (100 - product.DiscountPercentage.GetValueOrDefault()) / 100m;
+                                    </a>
+                                }
+                            }
+                        }
 
-                                            <div class="old-price">
-                                                @product.Price?.ToString("N0") ₽
+                    </div>
+                </div>
+                <div class="catalog-toolbar">
+
+                    <a asp-action="Index"
+                       class="reset-filters-btn">
+                        Сбросить фильтры
+                    </a>
+                    <div class="catalog-count-chip">
+                        Найдено товаров: @ViewBag.TotalProducts
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="catalog-content">
+
+            <div class="catalog-sorting">
+
+                <div class="catalog-categories">
+
+                    <a asp-action="Index"
+                       asp-route-parentCategoryId="@ViewBag.SelectedParentCategory"
+                       asp-route-childCategoryId="@ViewBag.SelectedChildCategory"
+                       asp-route-minPrice="@ViewBag.MinPrice"
+                       asp-route-maxPrice="@ViewBag.MaxPrice"
+                       class="sort-chip">
+                        Популярные
+                    </a>
+
+                    <a asp-action="Index"
+                       asp-route-parentCategoryId="@ViewBag.SelectedParentCategory"
+                       asp-route-childCategoryId="@ViewBag.SelectedChildCategory"
+                       asp-route-minPrice="@ViewBag.MinPrice"
+                       asp-route-maxPrice="@ViewBag.MaxPrice"
+                       asp-route-sort="new"
+                       class="sort-chip @(ViewBag.Sort == "new" ? "active" : "")">
+                        Новинки
+                    </a>
+
+                    <a asp-action="Index"
+                       asp-route-parentCategoryId="@ViewBag.SelectedParentCategory"
+                       asp-route-childCategoryId="@ViewBag.SelectedChildCategory"
+                       asp-route-minPrice="@ViewBag.MinPrice"
+                       asp-route-maxPrice="@ViewBag.MaxPrice"
+                       asp-route-sort="cheap"
+                       class="sort-chip @(ViewBag.Sort == "cheap" ? "active" : "")">
+                        Сначала дешевле
+                    </a>
+
+                    <a asp-action="Index"
+                       asp-route-parentCategoryId="@ViewBag.SelectedParentCategory"
+                       asp-route-childCategoryId="@ViewBag.SelectedChildCategory"
+                       asp-route-minPrice="@ViewBag.MinPrice"
+                       asp-route-maxPrice="@ViewBag.MaxPrice"
+                       asp-route-sort="expensive"
+                       class="sort-chip @(ViewBag.Sort == "expensive" ? "active" : "")">
+                        Сначала дороже
+                    </a>
+
+                    <a asp-action="Index"
+                       asp-route-parentCategoryId="@ViewBag.SelectedParentCategory"
+                       asp-route-childCategoryId="@ViewBag.SelectedChildCategory"
+                       asp-route-minPrice="@ViewBag.MinPrice"
+                       asp-route-maxPrice="@ViewBag.MaxPrice"
+                       asp-route-sort="discount"
+                       class="sort-chip @(ViewBag.Sort == "discount" ? "active" : "")">
+                        По размеру скидки
+                    </a>
+
+                </div>
+            </div>
+
+
+                @if (!Model.Any())
+                {
+                    <div class="alert alert-warning text-center">
+                        Товары не найдены
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-4">
+
+                        @foreach (var product in Model)
+                        {
+                            <div class="col-md-6 col-lg-6 col-xl-4">
+
+                                <div class="card product-card h-100 border-0">
+
+                                    <a asp-action="Details"
+                                       asp-route-id="@product.Id"
+                                       class="product-link">
+
+                                        <div class="product-image position-relative">
+
+                                            <img src="@(string.IsNullOrEmpty(product.Picture)
+                                                                                                            ? "/images/no-image.jpg"
+                                                                                                            : product.Picture)"
+                                         alt="@product.Name">
+
+                                    @if (product.DiscountPercentage > 0)
+                                            {
+                                                <span class="discount-badge">
+                                                    -@product.DiscountPercentage%
+                                                </span>
+                                            }
+
+                                        </div>
+
+                                    </a>
+
+                                    <div class="card-body d-flex flex-column p-3">
+
+                                        <a asp-action="Details"
+                                           asp-route-id="@product.Id"
+                                           class="product-name-link">
+
+                                            <h5 class="card-title">
+                                                @product.Name
+                                            </h5>
+
+                                        </a>
+
+                                        <div class="mt-auto">
+
+                                            <div class="text-center mb-4">
+
+                                                <div class="price-block mx-auto">
+
+                                                    @if (product.DiscountPercentage > 0)
+                                                    {
+                                                        decimal discountedPrice =
+                                                        product.Price.GetValueOrDefault() *
+                                                        (100 - product.DiscountPercentage.GetValueOrDefault()) / 100m;
+
+                                                        <div class="old-price">
+                                                            @product.Price?.ToString("N0") ₽
+                                                        </div>
+
+                                                        <div class="current-price discount-price">
+                                                            @discountedPrice.ToString("N0") ₽
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="old-price invisible">
+                                                            0 ₽
+                                                        </div>
+
+                                                        <div class="current-price">
+                                                            @product.Price?.ToString("N0") ₽
+                                                        </div>
+                                                    }
+
+                                                </div>
+
                                             </div>
 
-                                            <div class="current-price discount-price">
-                                                @discountedPrice.ToString("N0") ₽
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div class="old-price invisible">
-                                                0 ₽
-                                            </div>
+                                            @if (product.StockQuantity > 0)
+                                            {
+                                                <form class="add-to-cart-form">
 
-                                            <div class="current-price">
-                                                @product.Price?.ToString("N0") ₽
-                                            </div>
-                                        }
+                                                    <input type="hidden"
+                                                           name="productId"
+                                                           value="@product.Id" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-success w-100">
+
+                                                        В корзину
+
+                                                    </button>
+
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-secondary w-100" disabled>
+                                                    Нет в наличии
+                                                </button>
+                                            }
+
+                                        </div>
 
                                     </div>
 
                                 </div>
 
-                                @if (product.StockQuantity > 0)
-                                {
-                                    <form class="add-to-cart-form">
-
-                                        <input type="hidden"
-                                               name="productId"
-                                               value="@product.Id" />
-
-                                        <button type="submit"
-                                                class="btn btn-success w-100">
-
-                                            В корзину
-
-                                        </button>
-
-                                    </form>
-                                }
-                                else
-                                {
-                                    <button class="btn btn-secondary w-100" disabled>
-                                        Нет в наличии
-                                    </button>
-                                }
-
                             </div>
-
-                        </div>
+                        }
 
                     </div>
+                }
+            @if ((int)ViewBag.TotalPages > 1)
+            {
+                <div class="catalog-pagination">
+
+                    @if ((int)ViewBag.CurrentPage > 1)
+                    {
+                        <a asp-action="Index"
+                           asp-route-page="@((int)ViewBag.CurrentPage - 1)"
+                           asp-route-parentCategoryId="@ViewBag.SelectedParentCategory"
+                           asp-route-childCategoryId="@ViewBag.SelectedChildCategory"
+                           asp-route-minPrice="@ViewBag.MinPrice"
+                           asp-route-maxPrice="@ViewBag.MaxPrice"
+                           asp-route-sort="@ViewBag.Sort"
+                           class="page-btn">
+                            ←
+                        </a>
+                    }
+
+                    @for (int i = 1; i <= (int)ViewBag.TotalPages; i++)
+                    {
+                        <a asp-action="Index"
+                           asp-route-page="@i"
+                           asp-route-parentCategoryId="@ViewBag.SelectedParentCategory"
+                           asp-route-childCategoryId="@ViewBag.SelectedChildCategory"
+                           asp-route-minPrice="@ViewBag.MinPrice"
+                           asp-route-maxPrice="@ViewBag.MaxPrice"
+                           asp-route-sort="@ViewBag.Sort"
+                           class="page-btn @(i == (int)ViewBag.CurrentPage ? "active" : "")">
+
+                            @i
+
+                        </a>
+                    }
+
+                    @if ((int)ViewBag.CurrentPage < (int)ViewBag.TotalPages)
+                    {
+                        <a asp-action="Index"
+                           asp-route-page="@((int)ViewBag.CurrentPage + 1)"
+                           asp-route-parentCategoryId="@ViewBag.SelectedParentCategory"
+                           asp-route-childCategoryId="@ViewBag.SelectedChildCategory"
+                           asp-route-minPrice="@ViewBag.MinPrice"
+                           asp-route-maxPrice="@ViewBag.MaxPrice"
+                           asp-route-sort="@ViewBag.Sort"
+                           class="page-btn">
+                            →
+                        </a>
+                    }
 
                 </div>
             }
 
         </div>
+    </div>
+</div>
+<script>
+
+    document.querySelectorAll('.add-to-cart-form')
+    .forEach(form => {
+
+        form.addEventListener('submit', async function (e) {
+
+            e.preventDefault();
+
+            const productId =
+                this.querySelector('[name="productId"]').value;
+
+            const response = await fetch('/Cart/Add', {
+
+                method: 'POST',
+
+                headers: {
+                    'Content-Type':
+                    'application/x-www-form-urlencoded'
+                },
+
+                body:
+                    `productId=${productId}`
+            });
+
+            const result =
+                await response.json();
+
+            if (result.success) {
+
+                document.getElementById('cart-count')
+                    .textContent = result.count;
+
+                toastr.success(
+                    'Товар добавлен в корзину'
+                );
+            }
+                else
+                {
+                toastr.warning(
+                result.message
+                );
+                }
+        });
+    });
+
+</script>
+<script>
+
+    function scrollCategories(id, amount)
+    {
+        document
+            .getElementById(id)
+            .scrollBy({
+                left: amount,
+                behavior: 'smooth'
+            });
     }
 
-</div>
+</script>
+<script>
+    function toggleCategories() {
+
+        const block =
+            document.getElementById('categoriesBlock');
+
+        block.classList.toggle('collapsed');
+    }
+        function togglePrice() {
+
+        const block =
+            document.getElementById('priceBlock');
+
+        block.classList.toggle('collapsed');
+    }
+</script>
+<script>
+
+    const minSlider =
+        document.getElementById('minPrice');
+
+    const maxSlider =
+        document.getElementById('maxPrice');
+
+    const minText =
+        document.getElementById('minPriceText');
+
+    const maxText =
+        document.getElementById('maxPriceText');
+        const sliderRange =
+    document.getElementById('sliderRange');
+
+        function updatePriceSlider(e) {
+
+        let min = parseInt(minSlider.value);
+        let max = parseInt(maxSlider.value);
+
+        if (e && e.target === minSlider && min >= max) {
+
+            min = max - 100;
+            minSlider.value = min;
+        }
+
+        if (e && e.target === maxSlider && max <= min) {
+
+            max = min + 100;
+            maxSlider.value = max;
+        }
+
+        minText.value = min;
+
+        maxText.value =
+            max >= 10000
+            ? '10000+'
+            : max;
+
+        updateRangeBackground();
+    }
+
+        minSlider.addEventListener('input', function (e) {
+        updatePriceSlider(e);
+    });
+
+    maxSlider.addEventListener('input', function (e) {
+        updatePriceSlider(e);
+    });
+    updateRangeBackground();
+    updatePriceSlider();
+        function updateRangeBackground() {
+
+        const min = parseInt(minSlider.value);
+        const max = parseInt(maxSlider.value);
+
+        const left = (min / 10000) * 100;
+        const right = (max / 10000) * 100;
+
+        sliderRange.style.left = left + "%";
+        sliderRange.style.width = (right - left) + "%";
+    }
+
+    minText.addEventListener('change', function () {
+
+        let value = parseInt(this.value) || 0;
+
+        if (value < 0)
+            value = 0;
+
+        if (value > 10000)
+            value = 10000;
+
+        minSlider.value = value;
+
+        updatePriceSlider();
+        updateRangeBackground();
+    });
+
+    maxText.addEventListener('change', function () {
+
+        let value =
+            parseInt(this.value.replace('+', '')) || 10000;
+
+        if (value < 0)
+            value = 0;
+
+        if (value > 10000)
+            value = 10000;
+
+        maxSlider.value = value;
+
+        updatePriceSlider();
+        updateRangeBackground();
+    });
+
+    minSlider.addEventListener('input', updateRangeBackground);
+    maxSlider.addEventListener('input', updateRangeBackground);
+
+    updateRangeBackground();
+</script>
+<style>
+    .product-card {
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all .25s ease;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+
+        .product-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 30px rgba(0,0,0,.15);
+        }
+
+    .product-image {
+        height: 320px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .4s ease;
+        }
+
+    .product-card:hover img {
+        transform: scale(1.05);
+    }
+
+    .discount-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: #dc3545;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    }
+
+    .card-title {
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 1.3;
+        height: 48px;
+        overflow: hidden;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .btn-success {
+        background: #ffbbb7;
+        border-color: #ffbbb7;
+        color: #222 !important;
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(255, 187, 183, .35);
+    }
+
+        .btn-success:hover {
+            background: #ffaea9;
+            border-color: #ffaea9;
+            color: #111 !important;
+            transform: translateY(-2px);
+        }
+
+    .badge {
+        border-radius: 8px;
+    }
+
+    .price-block {
+        height: 34px;
+    }
+
+    .old-price {
+        font-size: 16px;
+        color: #999;
+        text-decoration: line-through;
+        line-height: 1.1;
+    }
+
+    .current-price {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+        color: #72D572;
+    }
+
+    .product-link,
+    .product-name-link {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .card-body {
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+    }
+
+    .catalog-title {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .catalog-title,
+    .catalog-subtitle {
+        text-align: center;
+
+    }
+
+    .catalog-subtitle {
+        color: #777;
+        font-size: 18px;
+        margin-bottom: 0;
+    }
+
+    .catalog-count {
+        color: #999;
+        font-size: 14px;
+        margin-top: 8px;
+    }
+
+    .category-chip {
+        flex-shrink: 0;
+        width: 100%;
+        text-align: left;
+        padding: 10px 18px;
+        border-radius: 30px;
+        background: #fff;
+        color: #444;
+        text-decoration: none;
+        border: 1px solid #eee;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all .25s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+        .category-chip:hover {
+            background: #ffbbb7;
+            color: #222;
+            border-color: #ffbbb7;
+            transform: translateY(-2px);
+        }
+
+        .category-chip.active {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+            color: #222;
+            font-weight: 600;
+        }
+
+    .subcategory-chip {
+        margin-right: 15px;
+        width: calc(100% - 15px);
+        font-size: 13px;
+        background: #fafafa;
+        border-color: #f0f0f0;
+        color: #666;
+    }
+
+        .subcategory-chip.active {
+            background: #ffe3e1;
+            border-color: #ffbbb7;
+            color: #222;
+        }
+
+    .categories-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        margin-bottom: 20px;
+    }
+
+    .scroll-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: #666;
+        font-size: 18px;
+        font-weight: 600;
+        box-shadow: 0 2px 10px rgba(0,0,0,.08);
+        transition: all .25s ease;
+    }
+
+        .scroll-btn:hover {
+            background: #ffbbb7;
+            color: #222;
+            transform: scale(1.08);
+        }
+
+    .catalog-categories {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .catalog-subcategories {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .catalog-sorting .catalog-categories {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .disabled-btn {
+        opacity: .25;
+        pointer-events: none;
+    }
+
+    .filter-title-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 18px;
+        justify-content: center;
+        margin-top: 4px;
+        margin-bottom: 4px;
+        border-radius: 999px;
+        background: #fff;
+        color: #444;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: .5px;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 4px 14px rgba(0,0,0,.05);
+        width: 100%;
+    }
+
+    .catalog-count-bottom {
+        display: flex;
+        justify-content: center;
+        margin-top: 18px;
+        margin-bottom: 40px;
+    }
+
+    .catalog-count-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 18px;
+        border-radius: 30px;
+        background: white;
+        border: 1px solid #eee;
+        color: #666;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+    .sorting-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 10px;
+        margin-bottom: 25px;
+    }
+
+    .reset-filters-wrapper {
+        text-align: center;
+        margin-top: 18px;
+    }
+
+    .catalog-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 20px;
+        margin-bottom: 25px;
+    }
+
+    .catalog-count-chip,
+    .reset-filters-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .reset-filters-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 20px;
+        border-radius: 30px;
+        background: white;
+        color: #666;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        border: 1px solid #eee;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        transition: all .25s ease;
+    }
+
+        .reset-filters-btn:hover {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+            color: #222;
+            transform: translateY(-2px);
+        }
+
+    .catalog-layout {
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+    }
+
+    .catalog-sidebar {
+        width: 240px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 65px;
+        align-self: flex-start;
+    }
+
+    .catalog-content {
+        flex: 1;
+    }
+
+    .catalog-sorting {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+    }
+
+    .row.g-4 {
+        width: 100%;
+    }
+
+    .sort-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 18px;
+        border-radius: 30px;
+        text-decoration: none;
+        background: white;
+        color: #555;
+        border: 1px solid #eee;
+        transition: .2s;
+        white-space: nowrap;
+    }
+
+        .sort-chip:hover {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+            color: #222;
+        }
+
+        .sort-chip.active {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+            color: #222;
+            font-weight: 600;
+        }
+
+    .category-toggle {
+        cursor: pointer;
+        user-select: none;
+        transition: .2s;
+    }
+
+        .category-toggle:hover {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+        }
+
+
+    .categories-wrapper {
+        overflow: hidden;
+        transition: .25s ease;
+    }
+
+        .categories-wrapper.collapsed {
+            display: none;
+        }
+
+    .price-filter {
+        margin-bottom: 20px;
+    }
+
+    .price-inputs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+        .price-inputs input {
+            width: 100%;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            background: white;
+            color: #555;
+            font-weight: 600;
+        }
+
+    .range-slider {
+        position: relative;
+        width: calc(100% - 18px);
+        height: 30px;
+        margin: 0 auto;
+    }
+
+    .slider-track {
+        position: absolute;
+        top: 13px;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: #d9d9d9;
+        border-radius: 10px;
+    }
+
+    .slider-range {
+        position: absolute;
+        top: 13px;
+        height: 4px;
+        background: #ffbbb7;
+        border-radius: 10px;
+    }
+
+    .range-slider input[type=range] {
+        position: absolute;
+        left: 0;
+        top: 4px;
+        width: 100%;
+        margin: 0;
+        appearance: none;
+        -webkit-appearance: none;
+        background: transparent;
+        pointer-events: none;
+    }
+
+        .range-slider input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffbbb7;
+            border: 3px solid white;
+            box-shadow: 0 0 0 1px #ffbbb7, 0 3px 8px rgba(0,0,0,.18);
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .range-slider input[type=range]::-webkit-slider-runnable-track {
+            background: transparent;
+            height: 4px;
+        }
+
+    .price-wrapper {
+        overflow: hidden;
+        transition: .25s ease;
+    }
+
+        .price-wrapper.collapsed {
+            display: none;
+        }
+</style>
 <script>
 
     document.querySelectorAll('.add-to-cart-form')
@@ -401,6 +1112,124 @@
             });
     }
 
+</script>
+<script>
+    function toggleCategories() {
+
+        const block =
+            document.getElementById('categoriesBlock');
+
+        block.classList.toggle('collapsed');
+    }
+        function togglePrice() {
+
+        const block =
+            document.getElementById('priceBlock');
+
+        block.classList.toggle('collapsed');
+    }
+</script>
+<script>
+
+    const minSlider =
+        document.getElementById('minPrice');
+
+    const maxSlider =
+        document.getElementById('maxPrice');
+
+    const minText =
+        document.getElementById('minPriceText');
+
+    const maxText =
+        document.getElementById('maxPriceText');
+        const sliderRange =
+    document.getElementById('sliderRange');
+
+        function updatePriceSlider(e) {
+
+        let min = parseInt(minSlider.value);
+        let max = parseInt(maxSlider.value);
+
+        if (e && e.target === minSlider && min >= max) {
+
+            min = max - 100;
+            minSlider.value = min;
+        }
+
+        if (e && e.target === maxSlider && max <= min) {
+
+            max = min + 100;
+            maxSlider.value = max;
+        }
+
+        minText.value = min;
+
+        maxText.value =
+            max >= 10000
+            ? '10000+'
+            : max;
+
+        updateRangeBackground();
+    }
+
+        minSlider.addEventListener('input', function (e) {
+        updatePriceSlider(e);
+    });
+
+    maxSlider.addEventListener('input', function (e) {
+        updatePriceSlider(e);
+    });
+    updateRangeBackground();
+    updatePriceSlider();
+        function updateRangeBackground() {
+
+        const min = parseInt(minSlider.value);
+        const max = parseInt(maxSlider.value);
+
+        const left = (min / 10000) * 100;
+        const right = (max / 10000) * 100;
+
+        sliderRange.style.left = left + "%";
+        sliderRange.style.width = (right - left) + "%";
+    }
+
+    minText.addEventListener('change', function () {
+
+        let value = parseInt(this.value) || 0;
+
+        if (value < 0)
+            value = 0;
+
+        if (value > 10000)
+            value = 10000;
+
+        minSlider.value = value;
+
+        updatePriceSlider();
+        updateRangeBackground();
+    });
+
+    maxText.addEventListener('change', function () {
+
+        let value =
+            parseInt(this.value.replace('+', '')) || 10000;
+
+        if (value < 0)
+            value = 0;
+
+        if (value > 10000)
+            value = 10000;
+
+        maxSlider.value = value;
+
+        updatePriceSlider();
+        updateRangeBackground();
+    });
+
+    minSlider.addEventListener('input', updateRangeBackground);
+    maxSlider.addEventListener('input', updateRangeBackground);
+
+    updateRangeBackground();
 </script>
 <style>
     .product-card {
@@ -519,6 +1348,11 @@
         margin-bottom: 10px;
     }
 
+    .catalog-title,
+    .catalog-subtitle {
+        text-align: center;
+    }
+
     .catalog-subtitle {
         color: #777;
         font-size: 18px;
@@ -533,6 +1367,8 @@
 
     .category-chip {
         flex-shrink: 0;
+        width: 100%;
+        text-align: left;
         padding: 10px 18px;
         border-radius: 30px;
         background: #fff;
@@ -560,10 +1396,19 @@
         }
 
     .subcategory-chip {
+        margin-right: 15px;
+        width: calc(100% - 15px);
+        font-size: 13px;
         background: #fafafa;
         border-color: #f0f0f0;
-        font-size: 13px;
+        color: #666;
     }
+
+        .subcategory-chip.active {
+            background: #ffe3e1;
+            border-color: #ffbbb7;
+            color: #222;
+        }
 
     .categories-wrapper {
         display: flex;
@@ -604,13 +1449,22 @@
     transform: scale(1.08);
 }
 
-    .catalog-categories,
+    .catalog-categories {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
     .catalog-subcategories {
         display: flex;
+        flex-direction: column;
         gap: 10px;
-        flex-wrap: nowrap;
+    }
+
+    .catalog-sorting .catalog-categories {
+        flex-direction: row;
+        flex-wrap: wrap;
         justify-content: center;
-        align-items: center;
     }
 
     .disabled-btn {
@@ -621,19 +1475,19 @@
     .filter-title-chip {
         display: inline-flex;
         align-items: center;
+        padding: 10px 18px;
         justify-content: center;
-        padding: 10px 22px;
-        margin-top: 24px;
-        margin-bottom: 16px;
+        margin-top: 4px;
+        margin-bottom: 4px;
         border-radius: 999px;
         background: #fff;
         color: #444;
-        font-size: 15px;
+        font-size: 18px;
         font-weight: 700;
         letter-spacing: .5px;
         border: 1px solid #f0f0f0;
         box-shadow: 0 4px 14px rgba(0,0,0,.05);
-        width: 180px;
+        width: 100%;
     }
 
     .catalog-count-bottom {
@@ -670,6 +1524,14 @@
         margin-top: 18px;
     }
 
+    .catalog-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        margin-bottom: 25px;
+    }
+
     .reset-filters-btn {
         display: inline-flex;
         align-items: center;
@@ -692,4 +1554,244 @@
             color: #222;
             transform: translateY(-2px);
         }
+
+    .catalog-layout {
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+    }
+
+    .catalog-sidebar {
+        width: 240px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 65px;
+        align-self: flex-start;
+    }
+
+    .catalog-content {
+        flex: 1;
+    }
+
+    .catalog-sorting {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+    }
+
+    .sort-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 18px;
+        border-radius: 30px;
+        text-decoration: none;
+        background: white;
+        color: #555;
+        border: 1px solid #eee;
+        transition: .2s;
+        white-space: nowrap;
+    }
+
+        .sort-chip:hover {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+            color: #222;
+        }
+
+        .sort-chip.active {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+            color: #222;
+            font-weight: 600;
+        }
+
+    .category-toggle {
+        cursor: pointer;
+        user-select: none;
+        transition: .2s;
+    }
+
+        .category-toggle:hover {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+        }
+
+
+    .categories-wrapper {
+        overflow: hidden;
+        transition: .25s ease;
+    }
+
+        .categories-wrapper.collapsed {
+            display: none;
+        }
+
+    .price-filter {
+        margin-bottom: 20px;
+    }
+
+    .price-inputs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+        .price-inputs input {
+            width: 100%;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            background: white;
+            color: #555;
+            font-weight: 600;
+        }
+
+    .range-slider {
+        position: relative;
+        width: calc(100% - 18px);
+        height: 30px;
+        margin: 0 auto;
+    }
+
+    .slider-track {
+        position: absolute;
+        top: 13px;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: #d9d9d9;
+        border-radius: 10px;
+    }
+
+    .slider-range {
+        position: absolute;
+        top: 13px;
+        height: 4px;
+        background: #ffbbb7;
+        border-radius: 10px;
+    }
+
+    .range-slider input[type=range] {
+        position: absolute;
+        left: 0;
+        top: 4px;
+        width: 100%;
+        margin: 0;
+        appearance: none;
+        -webkit-appearance: none;
+        background: transparent;
+        pointer-events: none;
+    }
+
+        .range-slider input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffbbb7;
+            border: 3px solid white;
+            box-shadow: 0 0 0 1px #ffbbb7, 0 3px 8px rgba(0,0,0,.18);
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .range-slider input[type=range]::-webkit-slider-runnable-track {
+            background: transparent;
+            height: 4px;
+        }
+
+    .price-wrapper {
+        overflow: hidden;
+        transition: .25s ease;
+    }
+
+        .price-wrapper.collapsed {
+            display: none;
+        }
+
+    .sidebar-bottom {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+        .sidebar-bottom .catalog-count-chip {
+            width: 100%;
+        }
+
+        .sidebar-bottom .reset-filters-btn {
+            width: 100%;
+        }
+
+    .catalog-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 40px;
+    }
+
+    .page-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: white;
+        border: 1px solid #eee;
+        color: #555;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: .25s;
+        font-weight: 600;
+    }
+
+        .page-btn:hover {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+            color: #222;
+        }
+
+        .page-btn.active {
+            background: #ffbbb7;
+            border-color: #ffbbb7;
+            color: #222;
+        }
 </style>
+<script>
+
+    let priceFilterTimer;
+
+    function applyPriceFilter() {
+
+        clearTimeout(priceFilterTimer);
+
+        priceFilterTimer = setTimeout(() => {
+
+            const min =
+                document.getElementById('minPrice').value;
+
+            const max =
+                document.getElementById('maxPrice').value;
+
+            const url =
+                new URL(window.location.href);
+
+            url.searchParams.set('minPrice', min);
+            url.searchParams.set('maxPrice', max);
+
+            window.location.href = url;
+
+        }, 700);
+    }
+
+    minSlider.addEventListener('change', applyPriceFilter);
+
+    maxSlider.addEventListener('change', applyPriceFilter);
+
+</script>

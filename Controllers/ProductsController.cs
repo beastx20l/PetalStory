@@ -18,6 +18,10 @@ namespace FlowerShop.Controllers
             string? search,
             int? parentCategoryId,
             int? childCategoryId,
+            int? minPrice,
+            int? maxPrice,
+            string? sort,
+            int page = 1,
             int parentPage = 1,
             int childPage = 1)
         {
@@ -42,10 +46,57 @@ namespace FlowerShop.Controllers
                 query = query.Where(x =>
                     childIds.Contains(x.CategoryId));
             }
+            if (minPrice.HasValue)
+            {
+                query = query.Where(x =>
+                    ((x.Price ?? 0) *
+                    (100 - (x.DiscountPercentage ?? 0)) / 100m)
+                    >= minPrice.Value);
+            }
 
+            if (maxPrice.HasValue && maxPrice.Value < 10000)
+            {
+                query = query.Where(x =>
+                    ((x.Price ?? 0) *
+                    (100 - (x.DiscountPercentage ?? 0)) / 100m)
+                    <= maxPrice.Value);
+            }
+
+            switch (sort)
+            {
+                case "new":
+                    query = query.OrderByDescending(x => x.CreatedAt);
+                    break;
+
+                case "cheap":
+                    query = query.OrderBy(x =>
+                        (x.Price ?? 0) *
+                        (100 - (x.DiscountPercentage ?? 0)) / 100m);
+                    break;
+
+                case "expensive":
+                    query = query.OrderByDescending(x =>
+                        (x.Price ?? 0) *
+                        (100 - (x.DiscountPercentage ?? 0)) / 100m);
+                    break;
+
+                case "discount":
+                    query = query.OrderByDescending(x => x.DiscountPercentage);
+                    break;
+            }
+            const int productsPageSize = 15;
+
+            var totalProducts = await query.CountAsync();
+            ViewBag.TotalProducts = totalProducts;
             var products = await query
-                .OrderByDescending(x => x.CreatedAt)
+                .Skip((page - 1) * productsPageSize)
+                .Take(productsPageSize)
                 .ToListAsync();
+            ViewBag.CurrentPage = page;
+
+            ViewBag.TotalPages =
+                (int)Math.Ceiling(
+                    (double)totalProducts / productsPageSize);
 
             ViewBag.SelectedParentCategory = parentCategoryId;
             ViewBag.SelectedChildCategory = childCategoryId;
@@ -59,13 +110,13 @@ namespace FlowerShop.Controllers
     .Where(x => x.ParentCategoryId == null)
     .ToList();
 
-            const int pageSize = 7;
+const int categoriesPageSize = 7;
 
             ViewBag.ParentPage = parentPage;
 
             ViewBag.ParentPages =
                 (int)Math.Ceiling(
-                    (double)parentCategories.Count / pageSize);
+(double)parentCategories.Count / categoriesPageSize);
             if (parentCategoryId.HasValue)
             {
                 var childCategories = categories
@@ -76,9 +127,11 @@ namespace FlowerShop.Controllers
 
                 ViewBag.ChildPages =
                     (int)Math.Ceiling(
-                        (double)childCategories.Count / pageSize);
+(double)childCategories.Count / categoriesPageSize  );
             }
-
+            ViewBag.MinPrice = minPrice ?? 0;
+            ViewBag.MaxPrice = maxPrice ?? 10000;
+            ViewBag.Sort = sort;
             return View(products);
         }
 
