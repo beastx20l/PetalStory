@@ -131,13 +131,16 @@
 
         <div class="checkout-total">
 
-            Итого:
-            @total.ToString("N0") ₽
+            <span>Итого</span>
+
+            <strong>
+                @total.ToString("N0") ₽
+            </strong>
 
         </div>
 
         <button id="openPaymentModal"
-                class="btn btn-success mt-4">
+                class="btn checkout-btn mt-4">
 
             Перейти к оплате
 
@@ -202,31 +205,25 @@
 
                     </div>
 
-                    <div class="fw-bold fs-5">
-
-                        К оплате:
-                        @total.ToString("N0") ₽
-
+                    <div class="payment-total">
+                        <span>К оплате</span>
+                        <strong>@total.ToString("N0") ₽</strong>
                     </div>
 
                 </div>
 
-                <div class="modal-footer">
-
-                    <button type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-
-                        Отмена
-
-                    </button>
+                <div class="modal-footer flex-column">
 
                     <button type="button"
                             id="createOrderBtn"
-                            class="btn btn-success">
-
+                            class="btn checkout-btn">
                         Оплатить
+                    </button>
 
+                    <button type="button"
+                            class="btn modal-cancel-btn"
+                            data-bs-dismiss="modal">
+                        Отмена
                     </button>
 
                 </div>
@@ -238,21 +235,45 @@
     </div>
 </div>
 <style>
+    input[type="radio"] {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #ffbbb7;
+        border-radius: 50%;
+        position: relative;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+        input[type="radio"]:checked::after {
+            content: "";
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ffbbb7;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
     .is-invalid {
         border-color: #dc3545 !important;
         box-shadow: 0 0 0 .15rem rgba(220,53,69,.15);
     }
+
     .checkout-card {
         background: white;
-        border-radius: 20px;
+        border: 1px solid #eeeeee;
+        border-radius: 24px;
         padding: 30px;
-        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+        box-shadow: 0 10px 30px rgba(0,0,0,.12);
     }
 
     .address-card {
         display: flex;
         gap: 14px;
-        align-items: flex-start;
+        align-items: center;
         padding: 16px;
         margin-bottom: 12px;
         border: 1px solid #eee;
@@ -261,14 +282,43 @@
         transition: .2s;
     }
 
+
+
+    .modal-content {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.15);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #f3f3f3;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #f3f3f3;
+        padding: 20px;
+        gap: 10px;
+    }
+    .checkout-card h5 {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
         .address-card:hover {
-            background: #fff7f6;
+            transform: translateY(-3px);
+            border-color: #f4a6b5;
+            box-shadow: 0 10px 30px rgba(244,166,181,.25);
+            background: white;
         }
 
     .checkout-total {
-        font-size: 28px;
-        font-weight: 700;
-        color: #72D572;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 30px;
+        font-weight: 800;
+        margin-top: 15px;
+        color: #212529;
     }
 
     #comment {
@@ -281,6 +331,87 @@
         padding-right: 6px;
     }
 
+    #paymentModal .modal-dialog {
+        margin-top: 80px;
+    }
+
+    .checkout-btn {
+        width: 100%;
+        height: 58px;
+        border-radius: 12px;
+        background: #ffbbb7;
+        border: 1px solid #ffbbb7;
+        color: #222 !important;
+        font-family: "Trebuchet MS", sans-serif;
+        font-size: 16px;
+        font-weight: 400;
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 12px rgba(255, 187, 183, .35);
+        transition: all .25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .checkout-btn:hover {
+            background: #ffaea9;
+            border-color: #ffaea9;
+            color: #111 !important;
+            transform: translateY(-2px);
+        }
+
+    .modal-cancel-btn {
+        width: 100%;
+        height: 50px;
+        border-radius: 12px;
+        border: 1px solid #eeeeee;
+        background: white;
+        color: #666;
+        transition: .2s;
+    }
+
+        .modal-cancel-btn:hover {
+            background: #f8f8f8;
+            color: #222;
+        }
+
+    #paymentModal .form-check-input {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #ffbbb7;
+        border-radius: 50%;
+        position: relative;
+        cursor: pointer;
+    }
+
+        #paymentModal .form-check-input:checked {
+            background: white;
+            border-color: #ffbbb7;
+        }
+
+            #paymentModal .form-check-input:checked::after {
+                content: "";
+                width: 8px;
+                height: 8px;
+                background: #ffbbb7;
+                border-radius: 50%;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+
+    .payment-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 25px;
+        font-size: 26px;
+        font-weight: 800;
+        color: #212529;
+    }
 </style>
 <script>
 
@@ -319,9 +450,118 @@
 
 </script>
 <script>
-        document
+           document
     .getElementById('openPaymentModal')
     .addEventListener('click', function () {
+
+        clearValidation();
+
+        const selectedAddress =
+            document.querySelector(
+                'input[name="addressId"]:checked');
+
+        const isNewAddress =
+            selectedAddress &&
+            selectedAddress.value == "0";
+
+        if (isNewAddress)
+        {
+            const address =
+                document.getElementById('newAddress')
+                .value.trim();
+
+            const recipient =
+                document.getElementById('recipientName')
+                .value.trim();
+
+            const phone =
+                document.getElementById('recipientPhone')
+                .value.trim();
+
+            if (!address)
+            {
+                document
+                    .getElementById('newAddress')
+                    .classList.add('is-invalid');
+
+                toastr.error("Введите адрес доставки");
+                return;
+            }
+
+            if (address.length < 5)
+            {
+                document
+                    .getElementById('newAddress')
+                    .classList.add('is-invalid');
+
+                toastr.error("Введите полный адрес");
+                return;
+            }
+
+            if (!recipient)
+            {
+                document
+                    .getElementById('recipientName')
+                    .classList.add('is-invalid');
+
+                toastr.error("Введите имя получателя");
+                return;
+            }
+
+            if (recipient.length < 2)
+            {
+                document
+                    .getElementById('recipientName')
+                    .classList.add('is-invalid');
+
+                toastr.error(
+                    "Имя получателя должно содержать минимум 2 буквы"
+                );
+                return;
+            }
+
+            if (/\d/.test(recipient))
+            {
+                document
+                    .getElementById('recipientName')
+                    .classList.add('is-invalid');
+
+                toastr.error(
+                    "Имя получателя не должно содержать цифры"
+                );
+                return;
+            }
+
+            const nameRegex =
+                /^[А-Яа-яЁёA-Za-z\s-]+$/;
+
+            if (!nameRegex.test(recipient))
+            {
+                document
+                    .getElementById('recipientName')
+                    .classList.add('is-invalid');
+
+                toastr.error(
+                    "Имя получателя может содержать только буквы, пробелы и дефис"
+                );
+                return;
+            }
+
+            const phoneRegex =
+                /^\+7\d{10}$/;
+
+            if (!phoneRegex.test(phone))
+            {
+                document
+                    .getElementById('recipientPhone')
+                    .classList.add('is-invalid');
+
+                toastr.error(
+                    "Введите корректный номер телефона"
+                );
+                return;
+            }
+        }
 
         const modal =
             new bootstrap.Modal(
@@ -378,108 +618,7 @@
         formData.append(
             'saveAddress',
             document.getElementById('saveAddress')?.checked ?? false);
-                const isNewAddress =
-        selectedAddress &&
-        selectedAddress.value == "0";
-
-    if (isNewAddress)
-    {
-        const address =
-            document.getElementById('newAddress')
-            .value.trim();
-
-        const recipient =
-            document.getElementById('recipientName')
-            .value.trim();
-
-        const phone =
-            document.getElementById('recipientPhone')
-            .value.trim();
-
-    if (!address)
-    {
-        document
-            .getElementById('newAddress')
-            .classList.add('is-invalid');
-
-        toastr.error("Введите адрес доставки");
-        return;
-    }
-
-    if (address.length < 5)
-    {
-        document
-            .getElementById('newAddress')
-            .classList.add('is-invalid');
-
-        toastr.error("Введите полный адрес");
-        return;
-    }
-
-    if (!recipient)
-    {
-        document
-            .getElementById('recipientName')
-            .classList.add('is-invalid');
-
-        toastr.error("Введите имя получателя");
-        return;
-    }
-
-    if (recipient.length < 2)
-    {
-        document
-            .getElementById('recipientName')
-            .classList.add('is-invalid');
-
-        toastr.error(
-            "Имя получателя должно содержать минимум 2 буквы"
-        );
-        return;
-    }
-
-    if (/\d/.test(recipient))
-    {
-        document
-            .getElementById('recipientName')
-            .classList.add('is-invalid');
-
-        toastr.error(
-            "Имя получателя не должно содержать цифры"
-        );
-        return;
-    }
-
-        const nameRegex =
-            /^[А-Яа-яЁёA-Za-z\s-]+$/;
-
-    if (!nameRegex.test(recipient))
-    {
-        document
-            .getElementById('recipientName')
-            .classList.add('is-invalid');
-
-        toastr.error(
-            "Имя получателя может содержать только буквы, пробелы и дефис"
-        );
-        return;
-    }
-
-        const phoneRegex =
-            /^\+7\d{10}$/;
-
-    if (!phoneRegex.test(phone))
-    {
-        document
-            .getElementById('recipientPhone')
-            .classList.add('is-invalid');
-
-        toastr.error(
-            "Введите корректный номер телефона"
-        );
-        return;
-    }
-    }
+                
         const response =
             await fetch('/Cart/CreateOrder', {
 
