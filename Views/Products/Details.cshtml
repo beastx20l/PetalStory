@@ -6,67 +6,122 @@
 
 <div class="container py-5">
 
-    <div class="row">
+    <div class="product-details-card">
 
-        <div class="col-lg-6">
+        <div class="row g-5 align-items-center">
 
-            <img src="@(string.IsNullOrEmpty(Model.Picture)
-                                 ? "/images/no-image.jpg"
-                                 : Model.Picture)"
-                 class="img-fluid rounded shadow"
-                 alt="@Model.Name">
+            <div class="col-lg-6">
 
-        </div>
+                <div class="product-details-image">
 
-        <div class="col-lg-6">
+                    <img src="@(string.IsNullOrEmpty(Model.Picture)
+                                                         ? "/images/no-image.jpg"
+                                                         : Model.Picture)"
+                         alt="@Model.Name">
 
-            <h1 class="fw-bold mb-3">
-                @Model.Name
-            </h1>
-
-            <p class="text-muted">
-                @(Model.Category?.Name ?? "Без категории")
-            </p>
-
-            <h2 class="text-success mb-4">
-                @Model.Price ₽
-            </h2>
-
-            @if (Model.StockQuantity > 0)
-            {
-                <span class="badge bg-success mb-4">
-                    В наличии
-                </span>
-            }
-            else
-            {
-                <span class="badge bg-danger mb-4">
-                    Нет в наличии
-                </span>
-            }
-
-            <div class="mt-4">
-
-                <h5>Описание</h5>
-
-                <p>
-                    @(string.IsNullOrWhiteSpace(Model.Description)
-                                        ? "Описание отсутствует."
-                                        : Model.Description)
-                </p>
+                </div>
 
             </div>
 
-            <div class="mt-4">
+            <div class="col-lg-6">
 
-                <a href="/Products"
-                   class="btn btn-outline-secondary">
-                    Назад в каталог
-                </a>
+                <h1 class="product-details-title">
+                    @Model.Name
+                </h1>
 
-                <button class="btn btn-success ms-2">
-                    Добавить в корзину
-                </button>
+                <div class="product-meta">
+
+                    @if (Model.StockQuantity > 0)
+                    {
+                        <span class="stock-badge stock-success">
+                            В наличии
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="stock-badge stock-danger">
+                            Нет в наличии
+                        </span>
+                    }
+
+                    <span class="category-chip-details">
+                        @(Model.Category?.Name ?? "Без категории")
+                    </span>
+
+                </div>
+
+                <div class="product-details-price">
+
+                    @if (Model.DiscountPercentage > 0)
+                    {
+                        decimal discountedPrice =
+                        Model.Price.GetValueOrDefault() *
+                        (100 - Model.DiscountPercentage.GetValueOrDefault()) / 100m;
+
+                        <div class="details-old-price">
+                            @Model.Price?.ToString("N0") ₽
+                        </div>
+
+                        <div class="details-current-price">
+                            @discountedPrice.ToString("N0") ₽
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="details-current-price">
+                            @Model.Price?.ToString("N0") ₽
+                        </div>
+                    }
+
+                </div>
+
+                <div class="description-card">
+
+                    <h5>Описание</h5>
+
+                    <p class="product-description">
+                        @(string.IsNullOrWhiteSpace(Model.Description)
+                                                ? "Описание отсутствует."
+                                                : Model.Description)
+                    </p>
+
+                </div>
+
+                <div class="details-buttons">
+
+                    <a href="/Products"
+                       class="btn btn-back">
+                        Назад
+                    </a>
+
+                    @if (Model.StockQuantity > 0)
+                    {
+                        <form class="add-to-cart-form">
+
+                            <input type="hidden"
+                                   name="productId"
+                                   value="@Model.Id" />
+
+                            <button type="submit"
+                                    class="btn btn-buy">
+
+                                Добавить в корзину
+
+                            </button>
+
+                        </form>
+                    }
+                    else
+                    {
+                        <button class="btn btn-buy disabled"
+                                disabled>
+
+                            Нет в наличии
+
+                        </button>
+                    }
+
+                </div>
 
             </div>
 
@@ -75,3 +130,206 @@
     </div>
 
 </div>
+<style>
+
+    .product-details-card {
+        background: white;
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+
+    .product-details-image {
+        height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #eee;
+        overflow: hidden;
+    }
+
+        .product-details-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+    .category-chip-details {
+        display: inline-block;
+        padding: 8px 18px;
+        border-radius: 999px;
+        background: #fff0f1;
+        color: #555;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .product-details-title {
+        font-size: 34px;
+        font-weight: 700;
+        margin-bottom: 17px;
+    }
+
+    .stock-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    .stock-success {
+        background: #dff5df;
+        color: #2c7c2c;
+    }
+
+    .stock-danger {
+        background: #ffe0e0;
+        color: #c63d3d;
+    }
+
+    .product-details-price {
+        margin-bottom: 30px;
+    }
+
+    .details-old-price {
+        font-size: 22px;
+        color: #999;
+        text-decoration: line-through;
+    }
+
+    .details-current-price {
+        font-size: 42px;
+        font-weight: 700;
+        color: #72D572;
+    }
+
+    .description-card {
+        background: #fafafa;
+        border-radius: 18px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+        .description-card h5 {
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .description-card p {
+            margin: 0;
+            color: #666;
+            line-height: 1.7;
+        }
+
+    .details-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-back {
+        height: 54px;
+        padding: 0 25px;
+        border-radius: 12px;
+        border: 1px solid #ddd;
+        background: white;
+        color: #444;
+        display: flex;
+        align-items: center;
+    }
+
+        .btn-back:hover {
+            background: #f8f8f8;
+        }
+
+    .btn-buy {
+        height: 54px;
+        padding: 0 30px;
+        border: none;
+        border-radius: 12px;
+        background: #ffbbb7;
+        color: #222;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 12px rgba(255,187,183,.35);
+    }
+
+        .btn-buy:hover {
+            background: #ffaea9;
+            color: #111;
+            transform: translateY(-2px);
+        }
+
+    .product-description {
+        white-space: pre-line;
+    }
+
+    .add-to-cart-form {
+        margin: 0;
+    }
+
+    .btn-buy:disabled {
+        background: #d9d9d9;
+        color: #666;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+        .btn-buy:disabled:hover {
+            transform: none;
+            background: #d9d9d9;
+        }
+</style>
+<script>
+
+    document.querySelector('.add-to-cart-form')
+    ?.addEventListener('submit', async function (e) {
+
+        e.preventDefault();
+
+        const productId =
+            this.querySelector('[name="productId"]').value;
+
+        const response = await fetch('/Cart/Add', {
+
+            method: 'POST',
+
+            headers: {
+                'Content-Type':
+                'application/x-www-form-urlencoded'
+            },
+
+            body:
+                `productId=${productId}`
+        });
+
+        if (response.redirected)
+        {
+            window.location.href = response.url;
+            return;
+        }
+
+        const result =
+            await response.json();
+
+        if (result.success)
+        {
+            document.getElementById('cart-count')
+                .textContent = result.count;
+
+            toastr.success(
+                'Товар добавлен в корзину'
+            );
+        }
+        else
+        {
+            toastr.warning(
+                result.message
+            );
+        }
+    });
+
+</script>
