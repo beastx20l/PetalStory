@@ -1,13 +1,16 @@
 ﻿@model FlowerShop.Models.ViewModels.EditProfileViewModel
 
 <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editProfileModalLabel">Редактирование профиля</h5>
+    <div class="modal-dialog profile-modal-dialog">
+        <div class="modal-content profile-modal">
+            <div class="modal-header profile-modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">
+                    <i class="fa fa-user-edit"></i>
+                    Редактирование профиля
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body profile-modal-body">
                 <form id="editProfileForm"
                       asp-controller="Account"
                       asp-action="EditProfile"
@@ -38,9 +41,18 @@
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-success" onclick="saveProfile()">Сохранить изменения</button>
+            <div class="modal-footer profile-modal-footer">
+                <button type="button"
+                        class="btn btn-cancel-modal"
+                        data-bs-dismiss="modal">
+                    Отмена
+                </button>
+                <button type="button"
+                        class="btn btn-save-address"
+                        onclick="saveProfile()">
+                    <i class="fa fa-save"></i>
+                    Сохранить изменения
+                </button>
             </div>
         </div>
     </div>

@@ -83,15 +83,19 @@
                 <h3 class="section-title mb-0">
                     Сохранённые адреса доставки
                 </h3>
-                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-                    <i class="fa fa-plus"></i> Добавить адрес
+                <button type="button"
+                        class="btn btn-add-address"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addAddressModal">
+                    <i class="fa fa-plus"></i>
+                    Добавить адрес
                 </button>
             </div>
 
             @if (Model.Addresses != null && Model.Addresses.Any())
             {
                 <div class="addresses-scroll">
-                    <div class="row">
+                    <div class="row g-3 mx-0">
                     @foreach (var address in Model.Addresses.OrderByDescending(a => a.IsDefault))
                     {
                         <div class="col-12 mb-3">
@@ -168,7 +172,8 @@
             {
                 @foreach (var order in Model.Orders.OrderByDescending(o => o.CreatedAt))
                 {
-                    <div class="profile-card mb-3">
+                        <div class="profile-card mb-3 order-clickable"
+                             data-order-id="@order.Id">
 
                         <div class="order-card-body">
 
@@ -203,6 +208,98 @@
                         </div>
                         
                     </div>
+                        <div class="d-none order-data"
+                             id="order-@order.Id">
+
+                            <div class="order-details-section">
+                                <div class="order-details-label">
+                                    Получатель
+                                </div>
+
+                                <div class="order-details-value">
+                                    @order.CustomerName
+                                </div>
+                            </div>
+
+                            <div class="order-details-section">
+                                <div class="order-details-label">
+                                    Телефон
+                                </div>
+
+                                <div class="order-details-value">
+                                    @order.Phone
+                                </div>
+                            </div>
+
+                            <div class="order-details-section">
+                                <div class="order-details-label">
+                                    Адрес доставки
+                                </div>
+
+                                <div class="order-details-value">
+                                    @order.DeliveryAddress
+                                </div>
+                            </div>
+
+                            <div class="order-details-section">
+                                <div class="order-details-label">
+                                    Способ оплаты
+                                </div>
+
+                                <div class="order-details-value">
+                                    @order.PaymentMethod
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(order.Comment))
+                            {
+                                <div class="order-details-section">
+
+                                    <div class="order-details-label">
+                                        Комментарий
+                                    </div>
+
+                                    <div class="order-comment">
+                                        @order.Comment
+                                    </div>
+
+                                </div>
+                            }
+
+                            <div class="order-divider"></div>
+
+                            <div class="order-products-title">
+                                Состав заказа
+                            </div>
+
+                            @foreach (var item in order.OrderItems)
+                            {
+                                <div class="order-product-row">
+
+                                    <div class="order-product-name">
+                                        @item.ProductName × @item.Quantity
+                                    </div>
+
+                                    <div class="order-product-price">
+                                        @((item.PriceAtPurchase * item.Quantity).ToString("N0")) ₽
+                                    </div>
+
+                                </div>
+                            }
+
+                            <div class="order-total-box">
+
+                                <div class="order-total-title">
+                                    Итого
+                                </div>
+
+                                <div class="order-total-price">
+                                    @order.TotalAmount.ToString("N0") ₽
+                                </div>
+
+                            </div>
+
+                        </div>
                 }
             }
             else
@@ -220,13 +317,16 @@
 
 <!-- ==================== Модальное окно добавления адреса ==================== -->
 <div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Добавить новый адрес</h5>
+    <div class="modal-dialog profile-modal-dialog">
+        <div class="modal-content profile-modal">
+            <div class="modal-header profile-modal-header">
+                <h5 class="modal-title">
+                    <i class="fa fa-map-marker-alt"></i>
+                    Добавить новый адрес
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body profile-modal-body">
                 <form id="addAddressForm">
                     <div class="mb-3">
                         <label class="form-label">Адрес <span class="text-danger">*</span></label>
@@ -272,9 +372,21 @@
                     }
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-buy" id="btnSaveAddress">Добавить адрес</button>
+            <div class="modal-footer profile-modal-footer">
+
+                <button type="button"
+                        class="btn btn-cancel-modal"
+                        data-bs-dismiss="modal">
+                    Отмена
+                </button>
+
+                <button type="button"
+                        class="btn btn-save-address"
+                        id="btnSaveAddress">
+                    <i class="fa fa-plus"></i>
+                    Добавить адрес
+                </button>
+
             </div>
         </div>
     </div>
@@ -626,7 +738,225 @@ new FlowerShop.Models.ViewModels.EditProfileViewModel
             .orders-scroll::-webkit-scrollbar-thumb:hover {
                 background: #bdbdbd;
             }
+
+    .profile-modal-dialog {
+        margin-top: 80px;
+    }
+
+    .profile-modal-dialog {
+        margin-top: 80px;
+    }
+
+    .profile-modal {
+        border: none;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 10px 35px rgba(0,0,0,.15);
+    }
+
+    .profile-modal-header {
+        padding: 22px 28px;
+        border-bottom: 1px solid #eee;
+    }
+
+        .profile-modal-header .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+    .profile-modal-body {
+        padding: 28px;
+    }
+
+    .profile-modal-footer {
+        border-top: 1px solid #eee;
+        padding: 20px 28px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    .btn-cancel-modal {
+        height: 48px;
+        min-width: 130px;
+        border-radius: 12px;
+        border: 1px solid #ddd;
+        background: white;
+        color: #444;
+    }
+
+        .btn-cancel-modal:hover {
+            background: #f8f8f8;
+        }
+
+    .btn-save-address {
+        height: 48px;
+        min-width: 180px;
+        border: none;
+        border-radius: 12px;
+        background: #ffbbb7;
+        color: #222;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(255,187,183,.35);
+    }
+
+        .btn-save-address:hover {
+            background: #ffaea9;
+            transform: translateY(-2px);
+        }
+
+    .modal-body .form-control {
+        border-radius: 12px;
+        height: 48px;
+    }
+
+    .modal-body .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .modal-body .form-check {
+        padding-top: 8px;
+    }
+
+    .btn-add-address {
+        height: 48px;
+        padding: 0 20px;
+        border: none;
+        border-radius: 12px;
+        background: #ffbbb7;
+        color: #222;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(255,187,183,.35);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-add-address:hover {
+            background: #ffaea9;
+            color: #111;
+            transform: translateY(-2px);
+        }
+
+    .order-clickable {
+        cursor: pointer;
+        transition: .2s;
+    }
+
+        .order-clickable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        }
+
+    .order-details-section {
+        margin-bottom: 24px;
+    }
+
+    .order-details-label {
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .order-details-value {
+        font-size: 17px;
+        font-weight: 600;
+        color: #222;
+    }
+
+    .order-products-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 18px;
+    }
+
+    .order-product-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        background: #fafafa;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+
+    .order-product-name {
+        font-weight: 500;
+        color: #222;
+    }
+
+    .order-product-price {
+        font-weight: 700;
+        color: #222;
+    }
+
+    .order-divider {
+        margin: 25px 0;
+        border-top: 1px solid #eee;
+    }
+
+    .order-comment {
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 14px 16px;
+    }
+
+    .order-total-box {
+        margin-top: 25px;
+        padding: 18px 20px;
+        background: #fff3f2;
+        border-radius: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .order-total-title {
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .order-total-price {
+        font-size: 26px;
+        font-weight: 700;
+    }
 </style>
+<div class="modal fade"
+     id="orderDetailsModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg profile-modal-dialog">
+
+        <div class="modal-content profile-modal">
+
+            <div class="modal-header profile-modal-header">
+
+                <h5 class="modal-title">
+                    <i class="fa fa-receipt"></i>
+                    Детали заказа
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body profile-modal-body"
+                 id="orderModalContent">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
 @section Scripts {
     <script>
         let addressIdToDelete = null;
@@ -898,6 +1228,39 @@ new FlowerShop.Models.ViewModels.EditProfileViewModel
                 );
             }
 
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            document
+                .querySelectorAll('.order-clickable')
+                .forEach(function (card) {
+
+                    card.addEventListener('click', function () {
+
+                        const orderId =
+                            this.dataset.orderId;
+
+                        const content =
+                            document.getElementById(
+                                `order-${orderId}`
+                            );
+
+                        document.getElementById(
+                            'orderModalContent'
+                        ).innerHTML = content.innerHTML;
+
+                        const modal =
+                            new bootstrap.Modal(
+                                document.getElementById(
+                                    'orderDetailsModal'
+                                )
+                            );
+
+                        modal.show();
+                    });
+                });
         });
     </script>
 }

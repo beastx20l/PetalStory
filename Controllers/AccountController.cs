@@ -28,6 +28,7 @@ namespace FlowerShop.Controllers
 
             var user = _context.Users
                 .Include(u => u.Orders)
+                    .ThenInclude(o => o.OrderItems)
                 .Include(u => u.Addresses)
                 .FirstOrDefault(u => u.Id == userId);
 
