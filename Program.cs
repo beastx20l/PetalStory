@@ -20,7 +20,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Auth/Login";
 
         options.Cookie.Name = "PetalStoryAuth";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);   // увеличил время
+        options.ExpireTimeSpan = TimeSpan.FromDays(1);   // увеличил время
         options.SlidingExpiration = true;
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.None;
