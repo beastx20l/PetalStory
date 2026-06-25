@@ -1,70 +1,147 @@
 ﻿@model FlowerShop.Models.Category
-
 @{
     ViewData["Title"] = "Редактирование категории";
 }
 
 <div class="container mt-4">
-
-    <h1>Редактирование категории</h1>
+    <div class="admin-topbar mb-4">
+        <div>
+            <h1 class="admin-header">
+                Редактирование категории
+            </h1>
+            <p class="admin-subtitle">
+                Изменение категории в каталоге PetalStory
+            </p>
+        </div>
+    </div>
 
     <form asp-action="Edit" method="post">
-
         <input asp-for="Id" type="hidden" />
 
-        <div asp-validation-summary="ModelOnly"
-             class="text-danger mb-3">
+        <div class="product-form-card">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="mb-3">
+                        <label class="form-label">Название категории</label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Родительская категория</label>
+                        <select asp-for="ParentCategoryId"
+                                asp-items="ViewBag.ParentCategories"
+                                class="form-select">
+                            <option value="">
+                                Нет родительской категории
+                            </option>
+                        </select>
+                        <span asp-validation-for="ParentCategoryId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-lg-4"></div>
+            </div>
+
+            <div class="form-footer">
+                <button type="submit" class="save-btn">
+                    Сохранить изменения
+                </button>
+                <a asp-action="Index" class="cancel-btn">
+                    Отмена
+                </a>
+            </div>
         </div>
-
-        <div class="mb-3">
-
-            <label class="form-label">
-                Название категории
-            </label>
-
-            <input asp-for="Name"
-                   class="form-control" />
-
-            <span asp-validation-for="Name"
-                  class="text-danger">
-            </span>
-
-        </div>
-
-        <div class="mb-3">
-
-            <label class="form-label">
-                Родительская категория
-            </label>
-
-            <select asp-for="ParentCategoryId"
-                    asp-items="ViewBag.ParentCategories"
-                    class="form-select">
-
-                <option value="">
-                    Нет родительской категории
-                </option>
-
-            </select>
-            <span asp-validation-for="ParentCategoryId"
-                  class="text-danger"></span>
-        </div>
-
-        <button type="submit"
-                class="btn btn-success">
-            Сохранить
-        </button>
-
-        <a asp-action="Index"
-           class="btn btn-secondary">
-            Отмена
-        </a>
-
     </form>
-
 </div>
 
 @section Scripts
 {
     <partial name="_ValidationScriptsPartial" />
 }
+
+<style>
+    .product-form-card {
+        background: white;
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+        margin-bottom: 25px;
+    }
+
+    .save-btn {
+        background: #ffbbb7;
+        border: none;
+        color: #222;
+        height: 54px;
+        padding: 0 30px;
+        border-radius: 14px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(255,187,183,.35);
+        transition: .25s;
+    }
+
+        .save-btn:hover {
+            background: #ffaea9;
+            transform: translateY(-2px);
+        }
+
+    .cancel-btn {
+        height: 54px;
+        padding: 0 30px;
+        border-radius: 14px;
+        font-weight: 600;
+        color: #666;
+        border: 2px solid #e6e6e6;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        margin-left: 12px;
+        transition: .25s;
+    }
+
+        .cancel-btn:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+    .form-control,
+    .form-select {
+        border-radius: 14px;
+        height: 52px;
+        border: 1px solid #e6e6e6;
+    }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .form-footer {
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 1px solid #f1f1f1;
+    }
+
+    .admin-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .admin-header {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #222;
+        margin-bottom: 4px;
+    }
+
+    .admin-subtitle {
+        color: #666;
+        margin: 0;
+        font-size: 1.05rem;
+    }
+</style>

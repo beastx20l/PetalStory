@@ -1,8 +1,6 @@
 ﻿@model IEnumerable<FlowerShop.Models.Category>
-
 @{
     ViewData["Title"] = "Категории";
-
     var rootCategories = Model
         .Where(x => x.ParentCategoryId == null)
         .OrderBy(x => x.Id)
@@ -10,273 +8,293 @@
 }
 
 <div class="container mt-4">
+    <div class="admin-topbar mb-4">
+        <div>
+            <h1 class="admin-header">
+                Категории товаров
+            </h1>
+            <p class="admin-subtitle">
+                Управление структурой каталога PetalStory
+            </p>
+        </div>
+        <a asp-action="Create" class="save-btn">
+            + Добавить категорию
+        </a>
+    </div>
+
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
             @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
             @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
-        <h1>Категории</h1>
-
-        <a asp-action="Create"
-           class="btn btn-primary">
-            Добавить категорию
-        </a>
-
-    </div>
 
     @if (!Model.Any())
     {
-        <div class="alert alert-warning">
-            Категории отсутствуют
+        <div class="product-form-card text-center py-5">
+            <p class="text-muted fs-5">Категории пока отсутствуют</p>
+            <a asp-action="Create" class="save-btn mt-3">Создать первую категорию</a>
         </div>
     }
     else
     {
         @foreach (var root in rootCategories)
         {
-            <div class="card shadow-sm mb-3">
-                @{
-                    var totalProducts =
-                    root.Products.Count +
-                    Model.Where(x => x.ParentCategoryId == root.Id)
-                    .Sum(x => x.Products.Count);
-                }
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center category-toggle"
-                     data-bs-toggle="collapse"
-                     data-bs-target="#category-@root.Id"
-                     style="cursor:pointer;">
+            var totalProducts = root.Products.Count +
+                Model.Where(x => x.ParentCategoryId == root.Id)
+                     .Sum(x => x.Products.Count);
 
-                    <div>
-                        <strong>@root.Name</strong>
-
-                        <span class="badge bg-light text-dark ms-2">
-                            ID: @root.Id
-                        </span>
-
-                        <span class="badge bg-primary ms-2">
-                            Всего товаров: @totalProducts
-                        </span>
-
-                        <span class="badge bg-success ms-2">
-                            В категории: @root.Products.Count
-                        </span>
+            <div class="product-form-card mb-4">
+                <div class="category-header d-flex justify-content-between align-items-center p-3 border-bottom">
+                    <div class="d-flex align-items-center gap-3 flex-grow-1" style="cursor:pointer;" onclick="toggleCategory(@root.Id)">
+                        <div class="admin-icon-small">
+                            <i class="fa fa-tags"></i>
+                        </div>
+                        <div>
+                            <strong style="font-size:1.3rem;">@root.Name</strong>
+                            <span class="badge bg-light text-dark ms-3">ID: @root.Id</span>
+                        </div>
                     </div>
 
-                    <div class="d-flex align-items-center gap-2">
-
-                        <div class="d-flex gap-2">
-
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-end me-3">
+                            <span class="text-muted">Товаров:</span> 
+                            <strong>@totalProducts</strong>
+                        </div>
+                        <div class="d-flex gap-2 action-area">
                             <a asp-action="Edit"
                                asp-route-id="@root.Id"
-                               class="btn btn-light btn-sm"
-                               onclick="event.stopPropagation();">
+                               class="btn-edit btn-sm">
                                 Изменить
                             </a>
-
                             <button type="button"
-                                    class="btn btn-danger btn-sm"
-                                    onclick="showDeleteCategory(@root.Id)">
+                                    class="btn-delete btn-sm"
+                                    onclick="event.stopImmediatePropagation(); showDeleteCategory(@root.Id)">
                                 Удалить
                             </button>
-
                         </div>
-
-                        <span class="category-arrow ms-2">
+                        <span class="category-arrow" onclick="toggleCategory(@root.Id); event.stopImmediatePropagation();">
                             <i class="fa fa-chevron-down"></i>
                         </span>
-
                     </div>
-
                 </div>
 
-
                 <div id="category-@root.Id" class="collapse">
-
-                    <div class="card-body">
-
+                    <div class="p-3">
                         @{
                             var children = Model
-                            .Where(x => x.ParentCategoryId == root.Id)
-                            .OrderBy(x => x.Id)
-                            .ToList();
+                                .Where(x => x.ParentCategoryId == root.Id)
+                                .OrderBy(x => x.Id)
+                                .ToList();
                         }
-
                         @if (children.Any())
                         {
-                            <ul class="list-group">
-
-                            @foreach (var child in children)
-                            {
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-
-                                    <div>
-                                        @child.Name
-
-                                        <span class="badge bg-secondary ms-2">
-                                            ID: @child.Id
-                                        </span>
-
-                                        <span class="badge bg-success ms-2">
-                                            Товаров: @child.Products.Count
-                                        </span>
-                                    </div>
-
-                                        <div class="d-flex gap-2">
-
+                            <ul class="list-group list-group-flush">
+                                @foreach (var child in children)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fa fa-folder text-muted"></i>
+                                            <div>
+                                                <strong>@child.Name</strong>
+                                                <span class="badge bg-secondary ms-2">ID: @child.Id</span>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2 action-area">
+                                            <span class="text-muted me-3">Товаров: <strong>@child.Products.Count</strong></span>
                                             <a asp-action="Edit"
                                                asp-route-id="@child.Id"
-                                               class="btn btn-warning btn-sm">
+                                               class="btn-edit btn-sm">
                                                 Изменить
                                             </a>
-
                                             <button type="button"
-                                                    class="btn btn-danger btn-sm"
-                                                    onclick="showDeleteCategory(@child.Id)">
+                                                    class="btn-delete btn-sm"
+                                                    onclick="event.stopImmediatePropagation(); showDeleteCategory(@child.Id)">
                                                 Удалить
                                             </button>
-
                                         </div>
-
-                                </li>
-                            }
-
-                        </ul>
-                    }
-                    else
-                    {
-                        <span class="text-muted">
-                            Нет подкатегорий
-                        </span>
-                    }
-
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                Подкатегорий нет
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
         }
     }
-    <!-- Модальное подтверждение удаления -->
-    <div class="modal fade"
-         id="deleteCategoryModal"
-         tabindex="-1">
+</div>
 
-        <div class="modal-dialog">
-
-            <div class="modal-content">
-
-                <div class="modal-header">
-
-                    <h5 class="modal-title">
-                        Подтверждение удаления
-                    </h5>
-
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal">
-                    </button>
-
-                </div>
-
-                <div class="modal-body text-center">
-
-                    <i class="fa fa-trash text-danger mb-3"
-                       style="font-size:42px;">
-                    </i>
-
-                    <p class="fs-5">
-                        Вы действительно хотите удалить категорию?
-                    </p>
-
-                </div>
-
-                <div class="modal-footer">
-
-                    <button type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-                        Отмена
-                    </button>
-
-                    <form id="deleteCategoryForm"
-                          method="post">
-
-                        @Html.AntiForgeryToken()
-
-                        <button type="submit"
-                                class="btn btn-danger">
-                            Удалить
-                        </button>
-
-                    </form>
-
-                </div>
-
+<!-- Модальное окно -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1" style="margin-top: 80px;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
+            <div class="modal-body text-center">
+                <i class="fa fa-trash text-danger mb-4" style="font-size:48px;"></i>
+                <p class="fs-5">Вы действительно хотите удалить категорию?</p>
+                <p class="text-muted small">Это действие нельзя отменить.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" data-bs-dismiss="modal">Отмена</button>
+                <form id="deleteCategoryForm" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="save-btn">Удалить</button>
+                </form>
+            </div>
         </div>
-
     </div>
 </div>
 
-<style>
-    .category-arrow {
-        display: inline-block;
-        transition: transform 0.25s ease;
-    }
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
 
-        .category-arrow.rotate {
-            transform: rotate(180deg);
+    <script>
+        function toggleCategory(id) {
+            const collapseEl = document.getElementById('category-' + id);
+            const bsCollapse = new bootstrap.Collapse(collapseEl, { toggle: true });
+            const arrow = document.querySelector(`#category-${id}`).parentElement.querySelector('.category-arrow i');
+            if (arrow) arrow.classList.toggle('fa-chevron-down', !collapseEl.classList.contains('show'));
+            if (arrow) arrow.classList.toggle('fa-chevron-up', collapseEl.classList.contains('show'));
         }
-</style>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
 
-        document.querySelectorAll('.category-toggle').forEach(header => {
+        function showDeleteCategory(id) {
+            const form = document.getElementById("deleteCategoryForm");
+            form.action = "/Admin/Categories/Delete/" + id;
+            const modal = new bootstrap.Modal(document.getElementById("deleteCategoryModal"));
+            modal.show();
+        }
 
-            header.addEventListener('click', function () {
-
-                const arrow =
-                    this.querySelector('.category-arrow');
-
-                arrow.classList.toggle('rotate');
-
+        // Защита от случайного срабатывания
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.action-area a, .action-area button').forEach(el => {
+                el.addEventListener('click', function (e) {
+                    e.stopImmediatePropagation();
+                });
             });
-
         });
+    </script>
+}
 
-    });
-</script>
+<style>
+    .admin-topbar { display: flex; justify-content: space-between; align-items: center; }
+    .admin-header { font-size: 2.2rem; font-weight: 700; color: #222; margin-bottom: 4px; }
+    .admin-subtitle { color: #666; margin: 0; font-size: 1.05rem; }
 
-<script>
-
-    function showDeleteCategory(id)
-    {
-        const form =
-            document.getElementById(
-                "deleteCategoryForm"
-            );
-
-        form.action =
-            "/Admin/Categories/Delete/" + id;
-
-        const modal =
-            new bootstrap.Modal(
-                document.getElementById(
-                    "deleteCategoryModal"
-                )
-            );
-
-        modal.show();
+    .product-form-card {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+        overflow: hidden;
+        margin-bottom: 20px;
     }
 
-</script>
+    .admin-icon-small {
+        width: 48px; height: 48px;
+        background: #ffbbb7;
+        color: #222;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    .category-header:hover { background: #fff0f5; }
+
+    .category-arrow {
+        font-size: 1.3rem;
+        transition: transform 0.3s;
+        cursor: pointer;
+    }
+
+    /* Кнопки */
+    .btn-edit {
+        background: #f8f9fa;
+        color: #222;
+        border: 2px solid #e6e6e6;
+        border-radius: 12px;
+        padding: 6px 18px;
+        font-weight: 600;
+        text-decoration: none !important;
+    }
+    .btn-edit:hover {
+        background: #fff0f5;
+        border-color: #ffbbb7;
+        transform: translateY(-1px);
+    }
+
+    .btn-delete {
+        background: #ffebee;
+        color: #d32f2f;
+        border: 2px solid #ffcdd2;
+        border-radius: 12px;
+        padding: 6px 18px;
+        font-weight: 600;
+    }
+    .btn-delete:hover {
+        background: #ffcdd2;
+        color: #c62828;
+        transform: translateY(-1px);
+    }
+
+    .save-btn {
+        background: #ffbbb7;
+        border: none;
+        color: #222;
+        height: 48px;
+        padding: 0 24px;
+        border-radius: 14px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(255,187,183,.35);
+        transition: .25s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .save-btn:hover {
+            background: #ffaea9;
+            transform: translateY(-2px);
+        }
+
+    .cancel-btn {
+        height: 48px;
+        padding: 0 24px;
+        border-radius: 14px;
+        font-weight: 600;
+        color: #666;
+        border: 2px solid #e6e6e6;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+        .cancel-btn:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+    .list-group-item {
+        border: none;
+        border-top: 1px solid #f1f1f1;
+    }
+</style>
