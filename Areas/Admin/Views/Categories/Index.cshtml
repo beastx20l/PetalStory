@@ -21,7 +21,29 @@
             + Добавить категорию
         </a>
     </div>
+    <!-- === ФИЛЬТРЫ И ПОИСК ДЛЯ КАТЕГОРИЙ === -->
+    <div class="filters-panel">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Поиск по названию категории" autocomplete="off">
+        </div>
 
+        <div class="filter-group">
+            <label>Товары</label>
+            <select id="productsFilter">
+                <option value="">Все</option>
+                <option value="has">Есть товары</option>
+                <option value="empty">Нет товаров</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Сортировка</label>
+            <select id="sortSelect">
+                <option value="products-desc">Товаров (по убыванию)</option>
+                <option value="products-asc">Товаров (по возрастанию)</option>
+            </select>
+        </div>
+    </div>
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -165,14 +187,15 @@
 @section Scripts
 {
     <partial name="_ValidationScriptsPartial" />
-
     <script>
         function toggleCategory(id) {
             const collapseEl = document.getElementById('category-' + id);
             const bsCollapse = new bootstrap.Collapse(collapseEl, { toggle: true });
             const arrow = document.querySelector(`#category-${id}`).parentElement.querySelector('.category-arrow i');
-            if (arrow) arrow.classList.toggle('fa-chevron-down', !collapseEl.classList.contains('show'));
-            if (arrow) arrow.classList.toggle('fa-chevron-up', collapseEl.classList.contains('show'));
+            if (arrow) {
+                arrow.classList.toggle('fa-chevron-down', !collapseEl.classList.contains('show'));
+                arrow.classList.toggle('fa-chevron-up', collapseEl.classList.contains('show'));
+            }
         }
 
         function showDeleteCategory(id) {
@@ -182,7 +205,68 @@
             modal.show();
         }
 
-        // Защита от случайного срабатывания
+        // ==================== ФИЛЬТРЫ И СОРТИРОВКА ====================
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchInput');
+            const productsFilter = document.getElementById('productsFilter');
+            const sortSelect = document.getElementById('sortSelect');
+            const categoryCards = document.querySelectorAll('.product-form-card');
+
+            function filterAndSort() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                const productFilterValue = productsFilter.value;
+                const sortValue = sortSelect.value;
+
+                const cardsArray = Array.from(categoryCards);
+
+                cardsArray.forEach(card => {
+                    const titleEl = card.querySelector('strong');
+                    const name = titleEl ? titleEl.textContent.toLowerCase() : '';
+                    const productsCountText = card.querySelector('.text-end strong') ||
+                                            card.querySelector('.list-group-item strong:last-child');
+                    const productsCount = productsCountText ? parseInt(productsCountText.textContent) || 0 : 0;
+
+                    let visible = true;
+
+                    // Поиск по названию
+                    if (searchTerm && !name.includes(searchTerm)) visible = false;
+
+                    // Фильтр по наличию товаров
+                    if (productFilterValue === 'has' && productsCount === 0) visible = false;
+                    if (productFilterValue === 'empty' && productsCount > 0) visible = false;
+
+                    card.style.display = visible ? '' : 'none';
+                });
+
+                // Сортировка
+                const visibleCards = cardsArray.filter(card => card.style.display !== 'none');
+
+                visibleCards.sort((a, b) => {
+                    const nameA = a.querySelector('strong').textContent.trim();
+                    const nameB = b.querySelector('strong').textContent.trim();
+
+                    const countA = parseInt(a.querySelector('.text-end strong')?.textContent) || 0;
+                    const countB = parseInt(b.querySelector('.text-end strong')?.textContent) || 0;
+
+                    if (sortValue === 'name-asc') return nameA.localeCompare(nameB);
+                    if (sortValue === 'name-desc') return nameB.localeCompare(nameA);
+                    if (sortValue === 'products-desc') return countB - countA;
+                    if (sortValue === 'products-asc') return countA - countB;
+                    return 0;
+                });
+
+                // Перемещаем карточки в новом порядке
+                const parent = categoryCards[0].parentElement;
+                visibleCards.forEach(card => parent.appendChild(card));
+            }
+
+            // События
+            searchInput.addEventListener('input', filterAndSort);
+            productsFilter.addEventListener('change', filterAndSort);
+            sortSelect.addEventListener('change', filterAndSort);
+        });
+
+        // Существующий код защиты от кликов
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.action-area a, .action-area button').forEach(el => {
                 el.addEventListener('click', function (e) {
@@ -297,4 +381,63 @@
         border: none;
         border-top: 1px solid #f1f1f1;
     }
+    /* Фильтры (те же, что и на странице товаров) */
+    .filters-panel {
+        background: white;
+        border-radius: 20px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.06);
+        display: flex;
+        align-items: end;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 280px;
+    }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 20px; /* одинаковый отступ со всех сторон */
+            border: 2px solid #f1f1f1;
+            border-radius: 16px;
+            font-size: 16px;
+            transition: all .25s;
+        }
+
+            .search-box input:focus {
+                outline: none;
+                border-color: #ffbbb7;
+                box-shadow: 0 0 0 4px rgba(255,187,183,.15);
+            }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+        .filter-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            margin-left: 4px;
+        }
+
+        .filter-group select {
+            padding: 12px 16px;
+            border: 2px solid #f1f1f1;
+            border-radius: 14px;
+            font-size: 15px;
+            min-width: 170px;
+            background: white;
+        }
+
+            .filter-group select:focus {
+                outline: none;
+                border-color: #ffbbb7;
+            }
 </style>

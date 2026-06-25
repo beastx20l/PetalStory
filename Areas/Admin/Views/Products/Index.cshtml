@@ -24,7 +24,38 @@
         </a>
 
     </div>
+    <!-- === ФИЛЬТРЫ И ПОИСК === -->
+    <div class="filters-panel">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Поиск по названию товара" autocomplete="off">
+        </div>
 
+        <div class="filter-group">
+            <label>Категория</label>
+            <select id="categoryFilter">
+                <option value="">Все категории</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Активность</label>
+            <select id="activeFilter">
+                <option value="">Все</option>
+                <option value="true">Активные</option>
+                <option value="false">Неактивные</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Сортировка</label>
+            <select id="sortSelect">
+                <option value="stock-desc">Остаток (по убыванию)</option>
+                <option value="stock-asc">Остаток (по возрастанию)</option>
+                <option value="price-desc">Цена (по убыванию)</option>
+                <option value="price-asc">Цена (по возрастанию)</option>
+            </select>
+        </div>
+    </div>
     <div class="products-table-wrapper">
 
         <table class="products-table">
@@ -235,5 +266,163 @@
         .delete-btn:hover {
             background: #ffc3c3;
         }
+    /* Фильтры */
+    .filters-panel {
+        background: white;
+        border-radius: 20px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.06);
+        display: flex;
+        align-items: end;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
 
+    .search-box {
+        flex: 1;
+        min-width: 280px;
+    }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 20px 14px 20px;
+            border: 2px solid #f1f1f1;
+            border-radius: 16px;
+            font-size: 16px;
+            transition: all .25s;
+        }
+
+            .search-box input:focus {
+                outline: none;
+                border-color: #ffbbb7;
+                box-shadow: 0 0 0 4px rgba(255,187,183,.15);
+            }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+        .filter-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            margin-left: 4px;
+        }
+
+        .filter-group select {
+            padding: 12px 16px;
+            border: 2px solid #f1f1f1;
+            border-radius: 14px;
+            font-size: 15px;
+            min-width: 160px;
+            background: white;
+        }
+
+            .filter-group select:focus {
+                outline: none;
+                border-color: #ffbbb7;
+            }
 </style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const activeFilter = document.getElementById('activeFilter');
+        const sortSelect = document.getElementById('sortSelect');
+        const tbody = document.querySelector('.products-table tbody');
+
+        // Заполняем категории
+        function populateCategories() {
+            const categories = new Set();
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const catCell = row.cells[5]; // колонка Категория
+                if (catCell) categories.add(catCell.textContent.trim());
+            });
+
+            categories.forEach(cat => {
+                if (cat) {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = cat;
+                    categoryFilter.appendChild(opt);
+                }
+            });
+        }
+
+        // Основная функция фильтрации + сортировки
+        function filterAndSort() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const selectedCategory = categoryFilter.value;
+            const activeValue = activeFilter.value;
+            const sortValue = sortSelect.value;
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            rows.forEach(row => {
+                const name = row.cells[2].textContent.toLowerCase(); // Название
+                const category = row.cells[5].textContent.trim();
+                const isActiveText = row.cells[6].textContent.trim();
+                const isActive = isActiveText === 'Да';
+
+                let visible = true;
+
+                // Поиск
+                if (searchTerm && !name.includes(searchTerm)) visible = false;
+
+                // Категория
+                if (selectedCategory && category !== selectedCategory) visible = false;
+
+                // Активность
+                if (activeValue === 'true' && !isActive) visible = false;
+                if (activeValue === 'false' && isActive) visible = false;
+
+                row.style.display = visible ? '' : 'none';
+            });
+
+            // Сортировка только видимых строк
+            const visibleRows = rows.filter(row => row.style.display !== 'none');
+
+            visibleRows.sort((a, b) => {
+                let valA, valB;
+
+                switch (sortValue) {
+                    case 'stock-desc':
+                    case 'stock-asc':
+                        valA = parseInt(a.cells[4].textContent) || 0;
+                        valB = parseInt(b.cells[4].textContent) || 0;
+                        return sortValue === 'stock-desc' ? valB - valA : valA - valB;
+
+                    case 'name-asc':
+                    case 'name-desc':
+                        valA = a.cells[2].textContent.trim();
+                        valB = b.cells[2].textContent.trim();
+                        return sortValue === 'name-asc'
+                            ? valA.localeCompare(valB)
+                            : valB.localeCompare(valA);
+
+                    case 'price-desc':
+                    case 'price-asc':
+                        valA = parseFloat(a.cells[3].textContent.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+                        valB = parseFloat(b.cells[3].textContent.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+                        return sortValue === 'price-desc' ? valB - valA : valA - valB;
+                }
+                return 0;
+            });
+
+            // Перемещаем строки в нужном порядке
+            visibleRows.forEach(row => tbody.appendChild(row));
+        }
+
+        // События
+        searchInput.addEventListener('input', filterAndSort);
+        categoryFilter.addEventListener('change', filterAndSort);
+        activeFilter.addEventListener('change', filterAndSort);
+        sortSelect.addEventListener('change', filterAndSort);
+
+        // Инициализация
+        populateCategories();
+    });
+</script>
