@@ -3,39 +3,155 @@
 }
 
 <div class="container mt-4">
-    <h1>Админ-панель PetalStory</h1>
+    <h1 class="admin-header">
+        Админ-панель
+    </h1>
 
-    <p class="text-muted">
-        Управление товарами, категориями и заказами магазина.
+    <p class="admin-subtitle">
+        Управление магазином PetalStory
     </p>
 
     <hr />
 
-    <div class="row mt-4">
+    <div class="row mt-4 g-4">
 
-        <div class="col-md-4 mb-3">
+        <div class="col-md-6 col-lg-3">
             <a asp-area="Admin"
                asp-controller="Products"
                asp-action="Index"
-               class="btn btn-primary w-100 p-3">
-                Управление товарами
+               class="admin-card">
+
+                <div class="admin-icon">
+                    <i class="fa fa-box"></i>
+                </div>
+
+                <div class="admin-title">
+                    Товары
+                </div>
+
+                <div class="admin-desc">
+                    Управление ассортиментом магазина
+                </div>
+
             </a>
         </div>
 
-        <div class="col-md-4 mb-3">
+        <div class="col-md-6 col-lg-3">
             <a asp-area="Admin"
                asp-controller="Categories"
                asp-action="Index"
-               class="btn btn-success w-100 p-3">
-                Управление категориями
+               class="admin-card">
+
+                <div class="admin-icon">
+                    <i class="fa fa-tags"></i>
+                </div>
+
+                <div class="admin-title">
+                    Категории товаров
+                </div>
+
+                <div class="admin-desc">
+                    Настройка структуры каталога
+                </div>
+
             </a>
         </div>
 
-        <div class="col-md-4 mb-3">
-            <a class="btn btn-warning w-100 p-3">
-                Управление заказами
+        <div class="col-md-6 col-lg-3">
+            <a href="#"
+               class="admin-card">
+
+                <div class="admin-icon">
+                    <i class="fa fa-clipboard-list"></i>
+                </div>
+
+                <div class="admin-title">
+                    Заказы
+                </div>
+
+                <div class="admin-desc">
+                    Просмотр и обработка заказов
+                </div>
+
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <a href="#"
+               class="admin-card">
+
+                <div class="admin-icon">
+                    <i class="fa fa-users"></i>
+                </div>
+
+                <div class="admin-title">
+                    Пользователи
+                </div>
+
+                <div class="admin-desc">
+                    Управление клиентами магазина
+                </div>
+
             </a>
         </div>
 
     </div>
 </div>
+
+<style>
+
+    .admin-card {
+        display: block;
+        background: white;
+        border-radius: 24px;
+        padding: 30px 20px;
+        text-align: center;
+        text-decoration: none;
+        color: #222;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+        transition: .25s;
+        height: 100%;
+    }
+
+        .admin-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 28px rgba(255,187,183,.35);
+            color: #222;
+        }
+
+    .admin-icon {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        background: #ffbbb7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+    }
+
+    .admin-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .admin-desc {
+        font-size: 14px;
+        color: #888;
+        line-height: 1.4;
+    }
+
+    .admin-header {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .admin-subtitle {
+        color: #888;
+        font-size: 18px;
+        margin-bottom: 30px;
+    }
+</style>

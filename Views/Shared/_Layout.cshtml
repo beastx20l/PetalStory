@@ -41,7 +41,8 @@
         }
 
             .navbar-logo:hover {
-                color: #ffbbb7 !important;
+                color: #222 !important;
+                text-decoration: none;
             }
 
         .navbar {
@@ -170,6 +171,7 @@
                     {
                         <li class="nav-item me-2">
                             <a class="nav-link nav-pill"
+                               asp-area=""
                                asp-controller="Cart"
                                asp-action="Index">
 
@@ -196,7 +198,10 @@
 
                             <ul class="dropdown-menu dropdown-menu-end shadow">
                                 <li>
-                                    <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
+                                    <a class="dropdown-item"
+                                       asp-area=""
+                                       asp-controller="Account"
+                                       asp-action="Profile">
                                         <i class="fa fa-user me-2"></i> Личный кабинет
                                     </a>
                                 </li>
@@ -204,7 +209,10 @@
                                 @if (User.IsInRole("Admin"))
                                 {
                                     <li>
-                                        <a class="dropdown-item" href="/Admin">
+                                        <a class="dropdown-item"
+                                           asp-area="Admin"
+                                           asp-controller="Dashboard"
+                                           asp-action="Index">
                                             <i class="fa fa-lock me-2"></i> Админ-панель
                                         </a>
                                     </li>

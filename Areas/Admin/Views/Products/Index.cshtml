@@ -6,24 +6,34 @@
 
 <div class="container mt-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="admin-topbar">
 
-        <h1>Товары</h1>
+        <div>
+            <h1 class="admin-header">
+                Товары
+            </h1>
+
+            <p class="admin-subtitle">
+                Управление ассортиментом магазина
+            </p>
+        </div>
 
         <a asp-action="Create"
-           class="btn btn-primary">
-            Добавить товар
+           class="add-btn">
+            + Добавить товар
         </a>
 
     </div>
 
-    <table class="table table-bordered table-striped">
+    <div class="products-table-wrapper">
+
+        <table class="products-table">
 
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Название</th>
                 <th>Фото</th>
+                <th>Название</th>
                 <th>Цена</th>
                 <th>Остаток</th>
                 <th>Категория</th>
@@ -41,17 +51,17 @@
                     <td>@item.Id</td>
                     <td>
 
-                        <img src="@(string.IsNullOrEmpty(item.Picture)
-                                     ? "/images/no-image.jpg"
-                                     : item.Picture)"
-                         width="80"
-                         height="80"
-                         style="object-fit:cover;" />
+                            <img src="@(string.IsNullOrEmpty(item.Picture)
+                                      ? "/images/no-image.jpg"
+                                      : item.Picture)"
+                             class="product-thumb" />
 
                     </td>
                     <td>@item.Name</td>
 
-                    <td>@item.Price ₽</td>
+                        <td class="price-cell">
+                            @item.Price?.ToString("N2") ₽
+                        </td>
 
                     <td>@item.StockQuantity</td>
 
@@ -60,30 +70,33 @@
                     <td>
                         @(item.IsActive == true ? "Да" : "Нет")
                     </td>
-                    <td>
+                        <td class="actions-cell">
 
-                        <a asp-action="Edit"
-                           asp-route-id="@item.Id"
-                           class="btn btn-sm btn-warning">
-                            Изменить
-                        </a>
+                            <div class="actions-wrapper">
 
-                        <form asp-action="Delete"
-                              asp-route-id="@item.Id"
-                              method="post"
-                              style="display:inline;">
+                                <a asp-action="Edit"
+                                   asp-route-id="@item.Id"
+                                   class="action-btn edit-btn">
+                                    Изменить
+                                </a>
 
-                            @Html.AntiForgeryToken()
+                                <form asp-action="Delete"
+                                      asp-route-id="@item.Id"
+                                      method="post">
 
-                            <button type="submit"
-                                    class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Удалить товар?')">
-                                Удалить
-                            </button>
+                                    @Html.AntiForgeryToken()
 
-                        </form>
+                                    <button type="submit"
+                                            class="action-btn delete-btn"
+                                            onclick="return confirm('Удалить товар?')">
+                                        Удалить
+                                    </button>
 
-                    </td>
+                                </form>
+
+                            </div>
+
+                        </td>
 
                 </tr>
             }
@@ -91,5 +104,136 @@
         </tbody>
 
     </table>
-
+    </div>
 </div>
+<style>
+    .price-cell {
+        min-width: 140px;
+        white-space: nowrap;
+        font-weight: 600;
+        color: #72D572;
+    }
+
+    .actions-cell {
+        min-width: 220px;
+    }
+
+    .actions-wrapper {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+        .actions-wrapper form {
+            margin: 0;
+        }
+
+    .action-btn {
+        white-space: nowrap;
+    }
+    .admin-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .admin-header {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .admin-subtitle {
+        color: #888;
+        font-size: 18px;
+    }
+
+    .add-btn {
+        background: #ffbbb7;
+        color: #222;
+        text-decoration: none;
+        padding: 14px 24px;
+        border-radius: 14px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(255,187,183,.35);
+        transition: .25s;
+    }
+
+        .add-btn:hover {
+            background: #ffaea9;
+            color: #222;
+            transform: translateY(-2px);
+        }
+
+    .products-table-wrapper {
+        background: white;
+        border-radius: 24px;
+        padding: 20px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+
+    .products-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .products-table thead {
+            background: #fff0f5;
+        }
+
+        .products-table th {
+            padding: 16px;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .products-table td {
+            padding: 16px;
+            border-top: 1px solid #f1f1f1;
+            vertical-align: middle;
+        }
+
+        .products-table tbody tr {
+            transition: .2s;
+        }
+
+            .products-table tbody tr:hover {
+                background: #fff8f8;
+            }
+
+    .product-thumb {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 14px;
+        border: 1px solid #eee;
+    }
+
+    .action-btn {
+        border: none;
+        padding: 8px 14px;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #222;
+        font-weight: 600;
+        transition: .25s;
+    }
+
+    .edit-btn {
+        background: #ffe4ec;
+    }
+
+        .edit-btn:hover {
+            background: #ffd4df;
+        }
+
+    .delete-btn {
+        background: #ffd7d7;
+    }
+
+        .delete-btn:hover {
+            background: #ffc3c3;
+        }
+
+</style>

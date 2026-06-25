@@ -1,14 +1,14 @@
 ﻿@model FlowerShop.Models.ViewModels.RegisterViewModel
 
 <div class="container mt-5"
-     style="max-width: 500px;">
+     style="max-width: 650px;">
 
-    <div class="card shadow">
+    <div class="card register-card">
 
         <div class="card-body p-4">
 
-            <h2 class="text-center mb-4">
-                Регистрация
+            <h2 class="text-center mb-4 register-title">
+                Создание аккаунта
             </h2>
 
             @if (ViewBag.Error != null)
@@ -129,7 +129,7 @@
                 </div>
 
                 <button type="submit"
-                        class="btn btn-success w-100">
+                        class="btn btn-register w-100">
 
                     Зарегистрироваться
 
@@ -139,7 +139,8 @@
 
             <div class="text-center mt-3">
 
-                <a href="/Auth/Login">
+                <a href="/Auth/Login"
+                   class="register-link">
                     Уже есть аккаунт?
                 </a>
 
@@ -150,7 +151,59 @@
     </div>
 
 </div>
+<style>
 
+    .register-card {
+        border: none;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+
+    .register-title {
+        font-size: 36px;
+        font-weight: 700;
+        color: #222;
+    }
+
+    .register-card .form-control {
+        height: 50px;
+        border-radius: 12px;
+    }
+
+    .register-card .form-label {
+        font-weight: 600;
+        color: #444;
+    }
+
+    .btn-register {
+        height: 52px;
+        border: none;
+        border-radius: 12px;
+        background: #ffbbb7;
+        color: #222;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(255,187,183,.35);
+        transition: .2s;
+    }
+
+        .btn-register:hover {
+            background: #ffaea9;
+            color: #111;
+            transform: translateY(-2px);
+        }
+
+    .register-link {
+        color: #888;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .register-link:hover {
+            color: #ff9f99;
+        }
+
+</style>
 @section Scripts {
 
     @{
