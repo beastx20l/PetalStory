@@ -1,6 +1,7 @@
 ﻿using FlowerShop.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FlowerShop.Areas.Admin.Controllers
 {
@@ -13,7 +14,33 @@ namespace FlowerShop.Areas.Admin.Controllers
         {
             _context = context;
         }
+        [HttpPost]
+        public async Task<IActionResult> ChangeRole(int userId, int newRoleId)
+        {
+            // Безопасное получение ID текущего пользователя
+            var currentUserClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (currentUserClaim != null && int.TryParse(currentUserClaim.Value, out int currentUserId))
+            {
+                if (currentUserId == userId)
+                {
+                    TempData["Error"] = "Нельзя изменить роль самому себе";
+                    return RedirectToAction(nameof(Details), new { id = userId });
+                }
+            }
 
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                TempData["Error"] = "Пользователь не найден";
+                return RedirectToAction(nameof(Index));
+            }
+
+            user.RoleId = newRoleId;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Роль пользователя успешно изменена";
+            return RedirectToAction(nameof(Details), new { id = userId });
+        }
         public async Task<IActionResult> Index()
         {
             var users = await _context.Users

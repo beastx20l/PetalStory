@@ -104,7 +104,32 @@
             </div>
 
         </div>
+        <div class="info-item mt-3">
+    <span class="info-label">Роль</span>
+    <div class="d-flex align-items-center gap-3">
+        <span class="info-value" id="currentRole">
+            @GetRoleName(Model.RoleId)
+        </span>
+        
+        <!-- Форма смены роли -->
+        <form asp-action="ChangeRole" method="post" class="d-flex align-items-center gap-2" id="roleForm">
+            <input type="hidden" name="userId" value="@Model.Id" />
 
+                    <select name="newRoleId" class="role-select" id="roleSelect">
+                        <option value="1">Обычный пользователь</option>
+                        <option value="2">Менеджер</option>
+                        <option value="3">Администратор</option>
+                    </select>
+            
+            <button type="submit" 
+                    class="btn-role-change"
+                    id="roleButton">
+                Изменить роль
+            </button>
+        </form>
+    </div>
+    <small class="text-muted" id="roleWarning"></small>
+</div>
     </div>
 
     <div class="row g-4 mt-1">
@@ -288,6 +313,37 @@
         box-shadow: 0 4px 16px rgba(0,0,0,.08);
     }
 
+    .role-select {
+        padding: 8px 12px;
+        border: 2px solid #f1f1f1;
+        border-radius: 10px;
+        font-size: 15px;
+        min-width: 220px;
+    }
+
+    .btn-role-change {
+        padding: 8px 16px;
+        border: none;
+        background: #ffbbb7;
+        color: #222;
+        font-weight: 600;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: .25s;
+        white-space: nowrap;
+    }
+
+        .btn-role-change:hover {
+            background: #ffaea9;
+            transform: translateY(-1px);
+        }
+
+        .btn-role-change:disabled {
+            background: #ddd;
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+        }
     .profile-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -407,7 +463,16 @@
     }
 </style>
 @functions {
-
+    private string GetRoleName(int? roleId)
+    {
+        return roleId switch
+        {
+            1 => "Обычный пользователь",
+            2 => "Менеджер",
+            3 => "Администратор",
+            _ => "Неизвестно"
+        };
+    }
     private string GetStatusClass(string status)
     {
         return status?.ToLower() switch
@@ -420,3 +485,19 @@
     }
 
 }
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const currentUserId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value'; // или другой способ получения Id текущего пользователя
+        const userId = '@Model.Id';
+        const roleSelect = document.getElementById('roleSelect');
+        const roleButton = document.getElementById('roleButton');
+        const roleWarning = document.getElementById('roleWarning');
+        roleSelect.value = '@Model.RoleId';
+        if (currentUserId === userId) {
+            roleSelect.disabled = true;
+            roleButton.disabled = true;
+            roleWarning.textContent = '⚠️ Нельзя изменить роль самому себе';
+            roleWarning.style.color = '#d32f2f';
+        }
+    });
+</script>
