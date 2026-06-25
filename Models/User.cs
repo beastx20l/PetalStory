@@ -20,6 +20,7 @@ namespace FlowerShop.Models
         public string Password { get; set; } = string.Empty;
 
         public int RoleId { get; set; } = 1;
+        public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; }
 

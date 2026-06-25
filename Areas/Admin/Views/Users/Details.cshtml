@@ -1,0 +1,422 @@
+﻿@model FlowerShop.Models.User
+
+@{
+    ViewData["Title"] = "Пользователь";
+
+    var ordersCount = Model.Orders?.Count ?? 0;
+    var addressesCount = Model.Addresses?.Count ?? 0;
+    var totalSpent = Model.Orders?.Sum(x => x.TotalAmount) ?? 0;
+}
+
+<div class="container mt-4">
+
+    <div class="admin-topbar">
+
+        <div>
+            <h1 class="admin-header">
+                Пользователь #@Model.Id
+            </h1>
+
+            <p class="admin-subtitle">
+                Подробная информация об аккаунте
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="back-btn">
+            ← Назад
+        </a>
+
+    </div>
+
+    <div class="profile-card">
+
+        <div class="profile-grid">
+
+            <div class="info-item">
+                <span class="info-label">
+                    Имя
+                </span>
+
+                <span class="info-value">
+                    @Model.FirstName
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">
+                    Фамилия
+                </span>
+
+                <span class="info-value">
+                    @Model.LastName
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">
+                    Email
+                </span>
+
+                <span class="info-value">
+                    @Model.Email
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">
+                    Телефон
+                </span>
+
+                <span class="info-value">
+                    @Model.Phone
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">
+                    Дата регистрации
+                </span>
+
+                <span class="info-value">
+                    @Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">
+                    Статус
+                </span>
+
+                @if (Model.IsActive)
+                {
+                    <span class="status-badge status-active">
+                        Активен
+                    </span>
+                }
+                else
+                {
+                    <span class="status-badge status-banned">
+                        Заблокирован
+                    </span>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="row g-4 mt-1">
+
+        <div class="col-md-4">
+            <div class="stat-card">
+
+                <div class="stat-number">
+                    @ordersCount
+                </div>
+
+                <div class="stat-title">
+                    Заказов
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card">
+
+                <div class="stat-number">
+                    @addressesCount
+                </div>
+
+                <div class="stat-title">
+                    Адресов
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card">
+
+                <div class="stat-number">
+                    @totalSpent.ToString("N0") ₽
+                </div>
+
+                <div class="stat-title">
+                    Потрачено
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <div class="row mt-4">
+
+        <!-- АДРЕСА -->
+        <div class="col-lg-6">
+
+            <div class="profile-card">
+
+                <h4 class="section-title">
+                    Сохранённые адреса
+                </h4>
+                @if (Model.Addresses?.Any() == true)
+                {
+                    @foreach (var address in Model.Addresses)
+                    {
+                        <div class="address-card">
+
+                            <div class="fw-bold">
+                                @address.RecipientName
+                            </div>
+
+                            <div class="text-muted">
+                                @address.Address
+                            </div>
+
+                            <div class="small text-secondary">
+                                @address.Phone
+                            </div>
+
+                            @if (address.IsDefault)
+                            {
+                                <span class="default-badge">
+                                    Основной
+                                </span>
+                            }
+
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted mb-0">
+                        Адресов нет
+                    </p>
+                }
+
+            </div>
+
+        </div>
+
+        <!-- ЗАКАЗЫ -->
+        <div class="col-lg-6">
+
+            <div class="profile-card">
+
+                <h4 class="section-title">
+                    Заказы пользователя
+                </h4>
+
+                @if (Model.Orders?.Any() == true)
+                {
+                    <table class="orders-table">
+
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Дата</th>
+                                <th>Сумма</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var order in Model.Orders.OrderByDescending(x => x.CreatedAt))
+                            {
+                                <tr>
+
+                                    <td>
+                                        #@order.Id
+                                    </td>
+
+                                    <td>
+                                        @order.CreatedAt.ToString("dd.MM.yyyy")
+                                    </td>
+
+                                    <td class="price-cell">
+                                        @order.TotalAmount.ToString("N0") ₽
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">
+                        Заказов нет
+                    </p>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<style>
+
+    .admin-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .admin-header {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .admin-subtitle {
+        color: #888;
+        font-size: 18px;
+    }
+
+    .profile-card {
+        background: white;
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+
+    .profile-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 25px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-label {
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+
+    .info-value {
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-weight: 600;
+        display: inline-block;
+        width: fit-content;
+    }
+
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-banned {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 24px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+
+    .stat-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: #222;
+    }
+
+    .stat-title {
+        color: #888;
+        margin-top: 5px;
+    }
+
+    .back-btn {
+        background: #f1f3f5;
+        color: #222;
+        padding: 10px 18px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: .25s;
+    }
+
+        .back-btn:hover {
+            background: #e4e7ea;
+            color: #222;
+        }
+
+    .section-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+
+    .address-card {
+        padding: 15px;
+        border-radius: 14px;
+        background: #fff8f8;
+        margin-bottom: 12px;
+    }
+
+    .default-badge {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 5px 12px;
+        border-radius: 10px;
+        background: #d4edda;
+        color: #155724;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .orders-table th {
+            padding: 10px;
+            background: #fff0f5;
+        }
+
+        .orders-table td {
+            padding: 12px 10px;
+            border-top: 1px solid #eee;
+        }
+
+    .price-cell {
+        color: #72D572;
+        font-weight: 700;
+    }
+</style>
+@functions {
+
+    private string GetStatusClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "новый" => "status-new",
+            "в обработке" => "status-processing",
+            "доставлен" => "status-delivered",
+            _ => "status-new"
+        };
+    }
+
+}

@@ -37,7 +37,13 @@ namespace FlowerShop.Controllers
 
             if (user == null)
             {
-                ViewBag.Error = "Неверный email или пароль";
+                ViewBag.Error = "Неверный логин или пароль";
+                return View(model);
+            }
+
+            if (!user.IsActive)
+            {
+                ViewBag.Error = "Ваш аккаунт заблокирован";
                 return View(model);
             }
 

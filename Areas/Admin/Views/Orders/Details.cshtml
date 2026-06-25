@@ -1,0 +1,164 @@
+﻿@model FlowerShop.Models.Order
+@{
+    ViewData["Title"] = $"Заказ #{Model.Id}";
+}
+
+<div class="container mt-4">
+    <div class="admin-topbar mb-4">
+        <div>
+            <h1 class="admin-header">Заказ #<span>@Model.Id</span></h1>
+            <p class="admin-subtitle">от @Model.CreatedAt.ToString("dd MMMM yyyy HH:mm")</p>
+        </div>
+        <a asp-action="Index" class="cancel-btn">← Назад к заказам</a>
+    </div>
+
+    <div class="product-form-card">
+        <div class="row">
+            <div class="col-lg-8">
+                <h5>Информация о клиенте</h5>
+                <p><strong>Имя:</strong> @Model.CustomerName</p>
+                <p><strong>Телефон:</strong> @Model.Phone</p>
+                <p><strong>Адрес доставки:</strong> @Model.DeliveryAddress</p>
+                @if (!string.IsNullOrEmpty(Model.Comment))
+                {
+                    <p><strong>Комментарий:</strong> @Model.Comment</p>
+                }
+            </div>
+            <div class="col-lg-4">
+
+                <div class="status-panel">
+
+                    <h5>Статус заказа</h5>
+
+                    <form asp-action="UpdateStatus" method="post">
+
+                        <input type="hidden"
+                               name="id"
+                               value="@Model.Id" />
+
+                        <select name="status"
+                                class="form-select status-select">
+
+                            <option value="Новый"
+                                    selected="@(Model.Status == "Новый")">
+                                Новый
+                            </option>
+
+                            <option value="В обработке"
+                                    selected="@(Model.Status == "В обработке")">
+                                В обработке
+                            </option>
+
+                            <option value="Доставлен"
+                                    selected="@(Model.Status == "Доставлен")">
+                                Доставлен
+                            </option>
+
+                        </select>
+
+                        <button type="submit"
+                                class="save-btn w-100 mt-3">
+                            Сменить статус
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+        </div>
+
+        <hr />
+
+        <h5>Товары в заказе</h5>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Цена</th>
+                    <th>Кол-во</th>
+                    <th class="text-end">Сумма</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.OrderItems)
+                {
+                    <tr>
+                        <td>@item.ProductName</td>
+                        <td>@item.PriceAtPurchase.ToString("N0") ₽</td>
+                        <td>@item.Quantity</td>
+                        <td class="text-end">@((item.PriceAtPurchase * item.Quantity).ToString("N0")) ₽</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3" class="text-end">Итого:</th>
+                    <th class="text-end">@Model.TotalAmount.ToString("N0") ₽</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<style>
+    .status-panel {
+        max-width: 280px;
+        margin-left: auto;
+        text-align: left;
+    }
+
+        .status-panel h5 {
+            margin-bottom: 12px;
+        }
+
+    .status-select {
+        height: 52px;
+        border-radius: 14px;
+    }
+    /* Тот же стиль, что и везде */
+    .product-form-card {
+        background: white;
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+
+    .save-btn {
+        background: #ffbbb7;
+        border: none;
+        color: #222;
+        height: 48px;
+        padding: 0 24px;
+        border-radius: 14px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(255,187,183,.35);
+        transition: .25s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .save-btn:hover {
+            background: #ffaea9;
+            transform: translateY(-2px);
+        }
+
+    .cancel-btn {
+        height: 48px;
+        padding: 0 24px;
+        border-radius: 14px;
+        font-weight: 600;
+        color: #666;
+        border: 2px solid #e6e6e6;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+        .cancel-btn:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+</style>

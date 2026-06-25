@@ -189,9 +189,9 @@
                                     </div>
                                 </div>
 
-                                <div class="order-status">
-                                    @order.Status
-                                </div>
+                                    <div class="order-status @GetStatusClass(order.Status)">
+                                        @order.Status
+                                    </div>
 
                             </div>
 
@@ -677,8 +677,8 @@ new FlowerShop.Models.ViewModels.EditProfileViewModel
     }
 
     .order-status {
-        background: #e8f2ff;
-        color: #3578e5;
+        background: #ffe4ec;
+        color: #d86f8b;
         padding: 8px 16px;
         border-radius: 999px;
         font-size: 14px;
@@ -842,6 +842,27 @@ new FlowerShop.Models.ViewModels.EditProfileViewModel
             transform: translateY(-2px);
         }
 
+    .order-status {
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .status-new {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-processing {
+        background: #cce5ff;
+        color: #004085;
+    }
+
+    .status-delivered {
+        background: #d4edda;
+        color: #155724;
+    }
     .order-clickable {
         cursor: pointer;
         transition: .2s;
@@ -1263,4 +1284,16 @@ new FlowerShop.Models.ViewModels.EditProfileViewModel
                 });
         });
     </script>
+}
+@functions {
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Новый" => "status-new",
+            "В обработке" => "status-processing",
+            "Доставлен" => "status-delivered",
+            _ => "status-new"
+        };
+    }
 }
