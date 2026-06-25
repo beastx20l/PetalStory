@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FlowerShop.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Manager")]
     public class ProductsController : Controller
     {
         private readonly ApplicationDbContext _context;

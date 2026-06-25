@@ -1,42 +1,42 @@
 ﻿@model IEnumerable<FlowerShop.Models.Product>
-
 @{
     ViewData["Title"] = "Товары";
+
+    // Определяем роль текущего пользователя
+    bool isAdmin = User.IsInRole("Admin");
 }
 
 <div class="container mt-4">
-
     <div class="admin-topbar">
-
         <div>
             <h1 class="admin-header">
                 Товары
             </h1>
-
             <p class="admin-subtitle">
                 Управление ассортиментом магазина
             </p>
         </div>
 
-        <a asp-action="Create"
-           class="add-btn">
-            + Добавить товар
-        </a>
-
+        <!-- Кнопка "Добавить товар" — только для Админа -->
+        @if (isAdmin)
+        {
+            <a asp-action="Create" class="add-btn">
+                + Добавить товар
+            </a>
+        }
     </div>
+
     <!-- === ФИЛЬТРЫ И ПОИСК === -->
     <div class="filters-panel">
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="Поиск по названию товара" autocomplete="off">
         </div>
-
         <div class="filter-group">
             <label>Категория</label>
             <select id="categoryFilter">
                 <option value="">Все категории</option>
             </select>
         </div>
-
         <div class="filter-group">
             <label>Активность</label>
             <select id="activeFilter">
@@ -45,7 +45,6 @@
                 <option value="false">Неактивные</option>
             </select>
         </div>
-
         <div class="filter-group">
             <label>Сортировка</label>
             <select id="sortSelect">
@@ -56,85 +55,61 @@
             </select>
         </div>
     </div>
+
     <div class="products-table-wrapper">
-
         <table class="products-table">
-
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Фото</th>
-                <th>Название</th>
-                <th>Цена</th>
-                <th>Остаток</th>
-                <th>Категория</th>
-                <th>Активен</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            @foreach (var item in Model)
-            {
+            <thead>
                 <tr>
-
-                    <td>@item.Id</td>
-                    <td>
-
-                            <img src="@(string.IsNullOrEmpty(item.Picture)
-                                      ? "/images/no-image.jpg"
-                                      : item.Picture)"
-                             class="product-thumb" />
-
-                    </td>
-                    <td>@item.Name</td>
-
-                        <td class="price-cell">
-                            @item.Price?.ToString("N2") ₽
-                        </td>
-
-                    <td>@item.StockQuantity</td>
-
-                    <td>@item.Category?.Name</td>
-
-                    <td>
-                        @(item.IsActive == true ? "Да" : "Нет")
-                    </td>
-                        <td class="actions-cell">
-
-                            <div class="actions-wrapper">
-
-                                <a asp-action="Edit"
-                                   asp-route-id="@item.Id"
-                                   class="action-btn edit-btn">
-                                    Изменить
-                                </a>
-
-                                <form asp-action="Delete"
-                                      asp-route-id="@item.Id"
-                                      method="post">
-
-                                    @Html.AntiForgeryToken()
-
-                                    <button type="submit"
-                                            class="action-btn delete-btn"
-                                            onclick="return confirm('Удалить товар?')">
-                                        Удалить
-                                    </button>
-
-                                </form>
-
-                            </div>
-
-                        </td>
-
+                    <th>ID</th>
+                    <th>Фото</th>
+                    <th>Название</th>
+                    <th>Цена</th>
+                    <th>Остаток</th>
+                    <th>Категория</th>
+                    <th>Активен</th>
+                    <th>Действия</th>
                 </tr>
-            }
-
-        </tbody>
-
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Id</td>
+                        <td>
+                            <img src="@(string.IsNullOrEmpty(item.Picture) ? "/images/no-image.jpg" : item.Picture)"
+                                 class="product-thumb" />
+                        </td>
+                        <td>@item.Name</td>
+                        <td class="price-cell">@item.Price?.ToString("N2") ₽</td>
+                        <td>@item.StockQuantity</td>
+                        <td>@item.Category?.Name</td>
+                        <td>@(item.IsActive == true ? "Да" : "Нет")</td>
+                        <td class="actions-cell">
+                            <div class="actions-wrapper">
+                                <!-- Кнопки только для Админа -->
+                                @if (isAdmin)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn edit-btn">
+                                        Изменить
+                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="action-btn delete-btn"
+                                                onclick="return confirm('Удалить товар?')">
+                                            Удалить
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Только просмотр</span>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>
 <style>

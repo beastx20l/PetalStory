@@ -1,6 +1,8 @@
 ﻿@model dynamic
 @{
     ViewData["Title"] = "Админ-панель";
+
+    bool isAdmin = Model.IsAdmin == true;
 }
 
 <div class="container mt-4">
@@ -10,98 +12,92 @@
     <p class="admin-subtitle">
         Управление магазином PetalStory
     </p>
-    
 
     <!-- Основные карточки -->
     <div class="row mt-4 g-4">
-        <div class="col-md-6 col-lg-3">
+        <!-- Товары -->
+        <div class="@(isAdmin ? "col-md-6 col-lg-3" : "col-md-6 col-lg-4")">
             <a asp-area="Admin" asp-controller="Products" asp-action="Index" class="admin-card">
-                <div class="admin-icon">
-                    <i class="fa fa-box"></i>
-                </div>
+                <div class="admin-icon"><i class="fa fa-box"></i></div>
                 <div class="admin-title">Товары</div>
                 <div class="admin-desc">Управление ассортиментом магазина</div>
             </a>
         </div>
-        <div class="col-md-6 col-lg-3">
-            <a asp-area="Admin" asp-controller="Categories" asp-action="Index" class="admin-card">
-                <div class="admin-icon">
-                    <i class="fa fa-tags"></i>
-                </div>
-                <div class="admin-title">Категории товаров</div>
-                <div class="admin-desc">Настройка структуры каталога</div>
-            </a>
-        </div>
-        <div class="col-md-6 col-lg-3">
+
+        <!-- Категории - только для Админа -->
+        @if (isAdmin)
+        {
+            <div class="col-md-6 col-lg-3">
+                <a asp-area="Admin" asp-controller="Categories" asp-action="Index" class="admin-card">
+                    <div class="admin-icon"><i class="fa fa-tags"></i></div>
+                    <div class="admin-title">Категории товаров</div>
+                    <div class="admin-desc">Настройка структуры каталога</div>
+                </a>
+            </div>
+        }
+
+        <!-- Заказы -->
+        <div class="@(isAdmin ? "col-md-6 col-lg-3" : "col-md-6 col-lg-4")">
             <a asp-area="Admin" asp-controller="Orders" asp-action="Index" class="admin-card">
-                <div class="admin-icon">
-                    <i class="fa fa-clipboard-list"></i>
-                </div>
+                <div class="admin-icon"><i class="fa fa-clipboard-list"></i></div>
                 <div class="admin-title">Заказы</div>
                 <div class="admin-desc">Просмотр и обработка заказов</div>
             </a>
         </div>
-        <div class="col-md-6 col-lg-3">
+
+        <!-- Пользователи -->
+        <div class="@(isAdmin ? "col-md-6 col-lg-3" : "col-md-6 col-lg-4")">
             <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="admin-card">
-                <div class="admin-icon">
-                    <i class="fa fa-users"></i>
-                </div>
+                <div class="admin-icon"><i class="fa fa-users"></i></div>
                 <div class="admin-title">Пользователи</div>
                 <div class="admin-desc">Управление клиентами магазина</div>
             </a>
         </div>
     </div>
 
-    <!-- === СТАТИСТИКА === -->
-    <div class="mt-5">
-        <h2 class="section-title">Статистика магазина</h2>
-        <p class="admin-subtitle mb-4">Ключевые показатели за текущий период</p>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-md-6 col-lg-3">
-            <div class="admin-card stat-card">
-                <div class="admin-icon">
-                    <i class="fa fa-shopping-bag"></i>
-                </div>
-                <div class="admin-title">@Model.TotalOrders</div>
-                <div class="admin-desc">Всего заказов</div>
-            </div>
+    <!-- === СТАТИСТИКА - только для Админа === -->
+    @if (isAdmin)
+    {
+        <div class="mt-5">
+            <h2 class="section-title">Статистика магазина</h2>
+            <p class="admin-subtitle mb-4">Ключевые показатели за текущий период</p>
         </div>
 
-        <div class="col-md-6 col-lg-3">
-            <div class="admin-card stat-card">
-                <div class="admin-icon">
-                    <i class="fa fa-users"></i>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="admin-card stat-card">
+                    <div class="admin-icon"><i class="fa fa-shopping-bag"></i></div>
+                    <div class="admin-title">@Model.TotalOrders</div>
+                    <div class="admin-desc">Всего заказов</div>
                 </div>
-                <div class="admin-title">@Model.TotalUsers</div>
-                <div class="admin-desc">Пользователей</div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="admin-card stat-card">
+                    <div class="admin-icon"><i class="fa fa-users"></i></div>
+                    <div class="admin-title">@Model.TotalUsers</div>
+                    <div class="admin-desc">Пользователей</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="admin-card stat-card">
+                    <div class="admin-icon"><i class="fa fa-ruble-sign"></i></div>
+                    <div class="admin-title">@Model.MonthlyRevenue.ToString("N0") ₽</div>
+                    <div class="admin-desc">Выручка за месяц</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="admin-card stat-card">
+                    <div class="admin-icon"><i class="fa fa-calendar-day"></i></div>
+                    <div class="admin-title">@Model.DailyRevenue.ToString("N0") ₽</div>
+                    <div class="admin-desc">Выручка за сегодня</div>
+                </div>
             </div>
         </div>
-
-        <div class="col-md-6 col-lg-3">
-            <div class="admin-card stat-card">
-                <div class="admin-icon">
-                    <i class="fa fa-ruble-sign"></i>
-                </div>
-                <div class="admin-title">@Model.MonthlyRevenue.ToString("N0") ₽</div>
-                <div class="admin-desc">Выручка за месяц</div>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-3">
-            <div class="admin-card stat-card">
-                <div class="admin-icon">
-                    <i class="fa fa-calendar-day"></i>
-                </div>
-                <div class="admin-title">@Model.DailyRevenue.ToString("N0") ₽</div>
-                <div class="admin-desc">Выручка за сегодня</div>
-            </div>
-        </div>
-    </div>
+    }
 </div>
 
 <style>
+    /* Твои стили (оставил без изменений) */
     .admin-card {
         display: block;
         background: white;
@@ -173,7 +169,6 @@
         margin-bottom: 30px;
     }
 
-    /* Новый стиль для подзаголовка статистики */
     .section-title {
         font-size: 32px;
         font-weight: 700;

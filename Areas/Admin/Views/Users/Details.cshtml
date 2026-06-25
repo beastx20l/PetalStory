@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Пользователь";
-
+    bool isAdmin = User.IsInRole("Admin");
     var ordersCount = Model.Orders?.Count ?? 0;
     var addressesCount = Model.Addresses?.Count ?? 0;
     var totalSpent = Model.Orders?.Sum(x => x.TotalAmount) ?? 0;
@@ -110,7 +110,8 @@
         <span class="info-value" id="currentRole">
             @GetRoleName(Model.RoleId)
         </span>
-        
+        @if (isAdmin)
+                {
         <!-- Форма смены роли -->
         <form asp-action="ChangeRole" method="post" class="d-flex align-items-center gap-2" id="roleForm">
             <input type="hidden" name="userId" value="@Model.Id" />
@@ -127,8 +128,12 @@
                 Изменить роль
             </button>
         </form>
+                }
     </div>
+    @if (isAdmin)
+            {
     <small class="text-muted" id="roleWarning"></small>
+            }
 </div>
     </div>
 
@@ -487,17 +492,20 @@
 }
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const currentUserId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value'; // или другой способ получения Id текущего пользователя
-        const userId = '@Model.Id';
-        const roleSelect = document.getElementById('roleSelect');
-        const roleButton = document.getElementById('roleButton');
-        const roleWarning = document.getElementById('roleWarning');
-        roleSelect.value = '@Model.RoleId';
-        if (currentUserId === userId) {
-            roleSelect.disabled = true;
-            roleButton.disabled = true;
-            roleWarning.textContent = '⚠️ Нельзя изменить роль самому себе';
-            roleWarning.style.color = '#d32f2f';
+        const roleForm = document.getElementById('roleForm');
+        if (roleForm) {
+            const currentUserId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+            const userId = '@Model.Id';
+            const roleSelect = document.getElementById('roleSelect');
+            const roleButton = document.getElementById('roleButton');
+            const roleWarning = document.getElementById('roleWarning');
+
+            if (currentUserId === userId) {
+                roleSelect.disabled = true;
+                roleButton.disabled = true;
+                roleWarning.textContent = '⚠️ Нельзя изменить роль самому себе';
+                roleWarning.style.color = '#d32f2f';
+            }
         }
     });
 </script>

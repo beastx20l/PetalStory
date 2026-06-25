@@ -1,10 +1,12 @@
 ﻿using FlowerShop.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowerShop.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = "Admin,Manager")]
     public class OrdersController : Controller
     {
         private readonly ApplicationDbContext _context;

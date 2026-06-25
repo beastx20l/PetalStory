@@ -206,7 +206,7 @@
                                     </a>
                                 </li>
 
-                                @if (User.IsInRole("Admin"))
+                                @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
                                 {
                                     <li>
                                         <a class="dropdown-item"
